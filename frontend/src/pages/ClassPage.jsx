@@ -1,13 +1,39 @@
+import React, { useState } from "react";
 import NavBar from "../components/NavBar";
+import ContentPage from "./ContentsPage";
+import AttendancePage from "./AttendancePage";
 
 const ClassPage = () => {
+  const [activeTab, setActiveTab] = useState("contents");
+
   return (
     <div>
       <NavBar />
-      <main className="p-4">
-        <h1 className="text-2xl font-bold">Class Management</h1>
-        <p>Manage your classes here.</p>
-      </main>
+      {/* Tabs Navigation */}
+      <ul className="nav nav-tabs mb-4">
+        <li className="nav-item">
+          <button
+            className={`nav-link ${activeTab === "contents" ? "active" : ""}`}
+            onClick={() => setActiveTab("contents")}
+          >
+            Contents
+          </button>
+        </li>
+        <li className="nav-item">
+          <button
+            className={`nav-link ${activeTab === "attendance" ? "active" : ""}`}
+            onClick={() => setActiveTab("attendance")}
+          >
+            Attendance
+          </button>
+        </li>
+      </ul>
+
+      {/* Tab Contents */}
+      <div>
+        {activeTab === "contents" && <ContentPage />}
+        {activeTab === "attendance" && <AttendancePage />}
+      </div>
     </div>
   );
 };
