@@ -5,6 +5,7 @@ import ContentPage from "./pages/ContentsPage";
 import AttendancePage from "./pages/AttendancePage";
 import SubmissionPage from "./pages/SubmissionPage";
 import LoginPage from "./pages/LoginPage";
+import NotificationPage from "./pages/NotificationsPage";
 
 const App = () => {
   return (
@@ -16,6 +17,7 @@ const App = () => {
         <Route path="/content" element={<ContentPage />} />
         <Route path="/attendance" element={<AttendancePage />} />
         <Route path="/submission" element={<SubmissionPage />} />
+        <Route path="/notification" element={<NotificationPage />} />
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     </Router>
