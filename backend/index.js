@@ -1,21 +1,30 @@
-require("dotenv").config();
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const config = require("./config");
+
+const absensiRoutes = require("./routes/absensi");
+const authRoutes = require("./routes/auth");
+const classRoutes = require("./routes/class");
+const contentRoutes = require("./routes/content");
+const userRoutes = require("./routes/user");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
-// Simple route
-app.get("/", (req, res) => {
-  res.send("LMS System API is running!");
-});
+// Routes
+app.use("/api/absensi", absensiRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/class", classRoutes);
+app.use("/api/content", contentRoutes);
+app.use("/api/users", userRoutes);
 
-// Start the server
+// Server
+const PORT = config.port;
 app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });
