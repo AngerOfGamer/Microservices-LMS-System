@@ -1,6 +1,7 @@
 // Mengimpor Sequelize dan koneksi database
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/database.js'; // Koneksi database yang sudah diekspor dengan default
+import Class from '../models/class.js';
 
 // Definisikan model Absensi
 const Absensi = sequelize.define('Absensi', {

@@ -11,6 +11,10 @@ const sequelize = require('../config/database');
         type: DataTypes.INTEGER,
         allowNull: false,
       },
+      content_type: {
+          type: DataTypes.ENUM('video', 'document', 'quiz', 'assignment'),
+          allowNull: false,
+        },
       content_title: {
         type: DataTypes.STRING(100),
         allowNull: false,

@@ -6,17 +6,17 @@ dotenv.config();
 
 // Konfigurasi Sequelize
 const sequelize = new Sequelize(
-  process.env.DB_NAME,      // Nama database
-  process.env.DB_USER,      // Username
-  process.env.DB_PASSWORD,  // Password
+  process.env.DB_NAME,      
+  process.env.DB_USER,      
+  process.env.DB_PASSWORD,  
   {
-    host: process.env.DB_HOST, // Host database
-    dialect: 'mysql',          // Dialek database
-    logging: false,            // Menonaktifkan logging SQL
+    host: process.env.DB_HOST, 
+    dialect: 'mysql',          
+    logging: false,            
   }
 );
 
-// Cek koneksi ke database
+
 sequelize.authenticate()
   .then(() => console.log('Database connected'))
   .catch(err => console.error('Database connection error:', err));
