@@ -26,9 +26,5 @@ app.use("/api/users", userRoutes);
 // Server
 const PORT = config.port;
 app.listen(PORT, () => {
-<<<<<<< HEAD
   console.log(`Server is running on port ${PORT}`);
-=======
-  console.log(`Server is running on http://localhost:${PORT}`);
->>>>>>> 066e974f391d23556aa1b76e9c8ca7983ff21ce6
 });
