@@ -4,35 +4,33 @@ import { useNavigate } from "react-router-dom";
 const LoginPage = () => {
   const navigate = useNavigate();
 
-  // State untuk menyimpan username dan password
   const [username, setUsername] = useState("");
   const [nipNim, setNipNim] = useState("");
   const [error, setError] = useState("");
 
   const handleLogin = async () => {
     try {
-      // Kirim request ke backend
       const response = await fetch("http://localhost:5000/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          username: username,
-          nip_nim: nipNim,
-        }),
+        credentials: "include", // Kirim session cookie ke backend
+        body: JSON.stringify({ username, nip_nim: nipNim }), // Data login
       });
 
-      // Cek apakah login berhasil
       if (response.ok) {
         const data = await response.json();
         console.log("Login berhasil:", data);
 
-        // Navigasi ke dashboard jika login berhasil
+        // Simpan data user ke localStorage
+        localStorage.setItem("user", JSON.stringify(data.user));
+
+        // Navigasi ke dashboard
         navigate("/dashboard");
       } else {
         const errorData = await response.json();
-        setError(errorData.message);
+        setError(errorData.message); // Tampilkan pesan error
       }
     } catch (err) {
       console.error("Error saat login:", err);
