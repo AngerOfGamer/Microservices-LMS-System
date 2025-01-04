@@ -1,14 +1,18 @@
-require('dotenv').config();
-const { Sequelize } = require('sequelize');
+import dotenv from 'dotenv';
+import { Sequelize } from 'sequelize';
 
+// Konfigurasi dotenv
+dotenv.config();
+
+// Konfigurasi Sequelize
 const sequelize = new Sequelize(
-  process.env.DB_NAME,     
-  process.env.DB_USER,    
-  process.env.DB_PASSWORD, 
+  process.env.DB_NAME,      // Nama database
+  process.env.DB_USER,      // Username
+  process.env.DB_PASSWORD,  // Password
   {
-    host: process.env.DB_HOST, 
-    dialect: 'mysql',          
-    logging: false,            
+    host: process.env.DB_HOST, // Host database
+    dialect: 'mysql',          // Dialek database
+    logging: false,            // Menonaktifkan logging SQL
   }
 );
 
