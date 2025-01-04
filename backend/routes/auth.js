@@ -1,17 +1,8 @@
-import express from "express";
+const express = require("express");
 const session = require("express-session");
 const db = require("../db");
 
 const router = express.Router();
-
-app.use(
-  session({
-    secret: "your_secret_key", // Ganti dengan kunci rahasia Anda
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false }, // Set true jika menggunakan HTTPS
-  }),
-);
 
 // Login endpoint
 router.post("/login", (req, res) => {
@@ -47,10 +38,9 @@ router.post("/login", (req, res) => {
 
       res.json({
         message: "Login berhasil",
-        user: req.session.user, // Kirim data user ke client
+        user: req.session.user,
       });
     } else {
-      // User tidak ditemukan
       res.status(401).json({ message: "Username atau NIP/NIM salah." });
     }
   });

@@ -1,62 +1,71 @@
-import express from "express";
-import mysql from "mysql2";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-const router = express.Router();
+const LoginPage = () => {
+  const navigate = useNavigate();
 
-// Koneksi ke database
-const db = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "your_database_name",
-});
+  const [username, setUsername] = useState("");
+  const [nipNim, setNipNim] = useState("");
+  const [error, setError] = useState("");
 
-// Cek koneksi database
-db.connect((err) => {
-  if (err) {
-    console.error("Database connection failed:", err.stack);
-    return;
-  }
-  console.log("Connected to database.");
-});
-
-// Login endpoint
-router.post("/login", (req, res) => {
-  const { username, nip_nim } = req.body;
-
-  // Validasi input
-  if (!username || !nip_nim) {
-    return res
-      .status(400)
-      .json({ message: "Username dan NIP/NIM harus diisi" });
-  }
-
-  // Cari user di database
-  const query = "SELECT * FROM users WHERE username = ? AND nip_nim = ?";
-  db.query(query, [username, nip_nim], (err, results) => {
-    if (err) {
-      console.error("Error saat query database:", err);
-      return res
-        .status(500)
-        .json({ message: "Terjadi kesalahan pada server." });
-    }
-
-    if (results.length > 0) {
-      // User ditemukan
-      const user = results[0];
-      res.json({
-        message: "Login berhasil",
-        user: {
-          user_id: user.user_id,
-          username: user.username,
-          role: user.role,
+  const handleLogin = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
+        credentials: "include", // Kirim session cookie ke backend
+        body: JSON.stringify({ username, nip_nim: nipNim }), // Data login
       });
-    } else {
-      // User tidak ditemukan
-      res.status(401).json({ message: "Username atau NIP/NIM salah." });
-    }
-  });
-});
 
-export default router;
+      if (response.ok) {
+        const data = await response.json();
+        console.log("Login berhasil:", data);
+
+        // Simpan data user ke localStorage
+        localStorage.setItem("user", JSON.stringify(data.user));
+
+        // Navigasi ke dashboard
+        navigate("/dashboard");
+      } else {
+        const errorData = await response.json();
+        setError(errorData.message); // Tampilkan pesan error
+      }
+    } catch (err) {
+      console.error("Error saat login:", err);
+      setError("Terjadi kesalahan. Silakan coba lagi.");
+    }
+  };
+
+  return (
+    <div className="flex justify-center items-center h-screen bg-gray-100">
+      <div className="bg-white p-8 shadow-lg rounded-lg">
+        <h1 className="text-2xl font-bold mb-4">Login</h1>
+        {error && <p className="text-red-500 mb-4">{error}</p>}
+        <input
+          type="text"
+          placeholder="Username"
+          className="border p-2 w-full mb-4"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+        />
+        <input
+          type="text"
+          placeholder="NIP/NIM"
+          className="border p-2 w-full mb-4"
+          value={nipNim}
+          onChange={(e) => setNipNim(e.target.value)}
+        />
+        <button
+          onClick={handleLogin}
+          className="bg-blue-500 text-white py-2 px-4 rounded w-full"
+        >
+          Login
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default LoginPage;

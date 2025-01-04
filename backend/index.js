@@ -2,23 +2,39 @@ require("dotenv").config();
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-const authRoutes = require("./routes/authRoutes");
+const session = require("express-session");
+const auth = require("./routes/auth");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(cors());
 app.use(bodyParser.json());
 
-app.use("/auth", authRoutes);
+// Middleware Session
+app.use(
+  session({
+    secret: "your_secret_key",
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: process.env.NODE_ENV === "production" },
+  }),
+);
 
-// Simple route
+// Route
+app.use("/auth", auth);
 app.get("/", (req, res) => {
   res.send("LMS System API is running!");
 });
 
-// Start the server
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: "Terjadi kesalahan pada server." });
+});
+
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
+});
+
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
