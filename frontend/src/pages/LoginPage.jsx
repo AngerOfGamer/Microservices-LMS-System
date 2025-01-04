@@ -5,7 +5,7 @@ const LoginPage = () => {
   const navigate = useNavigate();
 
   const [username, setUsername] = useState("");
-  const [nipNim, setNipNim] = useState("");
+  const [nip_nim, setNipNim] = useState(""); // Ubah nipNim menjadi nip_nim
   const [error, setError] = useState("");
 
   const handleLogin = async () => {
@@ -16,7 +16,7 @@ const LoginPage = () => {
           "Content-Type": "application/json",
         },
         credentials: "include", // Kirim session cookie ke backend
-        body: JSON.stringify({ username, nip_nim: nipNim }), // Data login
+        body: JSON.stringify({ username, nip_nim }), // Sesuaikan dengan nama variabel backend
       });
 
       if (response.ok) {
@@ -54,8 +54,8 @@ const LoginPage = () => {
           type="text"
           placeholder="NIP/NIM"
           className="border p-2 w-full mb-4"
-          value={nipNim}
-          onChange={(e) => setNipNim(e.target.value)}
+          value={nip_nim} // Gunakan nip_nim di sini
+          onChange={(e) => setNipNim(e.target.value)} // Gunakan nip_nim di sini
         />
         <button
           onClick={handleLogin}

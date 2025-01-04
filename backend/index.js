@@ -1,30 +1,49 @@
+require("dotenv").config();
 const express = require("express");
-const bodyParser = require("body-parser");
 const cors = require("cors");
-const config = require("./config");
-
-const absensiRoutes = require("./routes/absensi");
-const authRoutes = require("./routes/auth");
-const classRoutes = require("./routes/class");
-const contentRoutes = require("./routes/content");
-const userRoutes = require("./routes/user");
+const session = require("express-session");
+const auth = require("./routes/auth");
 
 const app = express();
+const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(cors());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+// Middleware untuk mengizinkan CORS
+app.use(
+  cors({
+    origin: "http://localhost:3000", // Ganti dengan URL frontend Anda
+    credentials: true, // Untuk memungkinkan pengiriman cookie
+  })
+);
 
-// Routes
-app.use("/api/absensi", absensiRoutes);
-app.use("/api/auth", authRoutes);
-app.use("/api/class", classRoutes);
-app.use("/api/content", contentRoutes);
-app.use("/api/users", userRoutes);
+// Middleware untuk body parser
+app.use(express.json());
 
-// Server
-const PORT = config.port;
+// Middleware untuk session
+app.use(
+  session({
+    secret: "your_secret_key",
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+      secure: process.env.NODE_ENV === "production", // Sesuaikan dengan kebutuhan Anda
+      httpOnly: true,
+    },
+  })
+);
+
+// Route
+app.use("/auth", auth);
+
+app.get("/", (req, res) => {
+  res.send("LMS System API is running!");
+});
+
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: "Terjadi kesalahan pada server." });
+});
+
+// Menjalankan server
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(Server is running on http://localhost:${PORT});
 });
