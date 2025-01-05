@@ -3,7 +3,7 @@ const db = require("../db");
 
 const router = express.Router();
 
-// Endpoint untuk mendapatkan kelas
+// Endpoint untuk mendapatkan kelas berdasarkan role
 router.get("/", (req, res) => {
   if (!req.session.user) {
     return res.status(401).json({ message: "Anda belum login" });
@@ -30,8 +30,18 @@ router.get("/", (req, res) => {
     return res.status(403).json({ message: "Akses ditolak" });
   }
 
+  // Eksekusi query
   db.query(sql, params, (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
+    if (err) {
+      console.error("Database error:", err);
+      return res.status(500).json({ error: "Kesalahan server" });
+    }
+
+    // Jika tidak ada kelas ditemukan
+    if (results.length === 0) {
+      return res.json({ classes: [], message: "Tidak ada kelas ditemukan" });
+    }
+
     res.json({ classes: results });
   });
 });

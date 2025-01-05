@@ -12,8 +12,9 @@ const DashboardPage = () => {
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
-      fetchClasses(JSON.parse(storedUser).role);
+      const parsedUser = JSON.parse(storedUser);
+      setUser(parsedUser);
+      fetchClasses(parsedUser.role);
     } else {
       navigate("/login"); // Arahkan ke halaman login jika belum login
     }
@@ -29,7 +30,7 @@ const DashboardPage = () => {
 
       if (response.ok) {
         const data = await response.json();
-        setClasses(data.classes);
+        setClasses(data.classes || []);
       } else {
         const errorData = await response.json();
         setError(errorData.message || "Gagal memuat kelas");
