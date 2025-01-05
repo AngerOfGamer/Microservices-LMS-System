@@ -5,7 +5,7 @@ import ContentPage from "./ContentsPage"; // Import komponen ContentPage
 import AttendancePage from "./AttendancePage"; // Import komponen AttendancePage
 
 const ClassPage = () => {
-  const { classId } = useParams(); // Ambil classId dari URL
+  const { class_id } = useParams(); // Ambil classId dari URL
   const navigate = useNavigate();
   const [classDetails, setClassDetails] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -13,7 +13,7 @@ const ClassPage = () => {
 
   useEffect(() => {
     // Ambil data kelas berdasarkan classId
-    fetch(`http://localhost:5000/api/class/${classId}`, {
+    fetch(`http://localhost:5000/api/class/${class_id}`, {
       credentials: "include",  
     })
       .then((response) => response.json())
