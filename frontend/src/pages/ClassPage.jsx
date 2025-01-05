@@ -59,8 +59,8 @@ const ClassPage = () => {
           </div>
 
           {/* Render Tab Content */}
-          {activeTab === "contents" && <ContentPage classId={class_id} />}
-          {activeTab === "attendance" && <AttendancePage classId={class_id} />}
+          {activeTab === "contents" && <ContentPage role={role} classId={class_id} />}
+          {activeTab === "attendance" && <AttendancePage role={role} classId={class_id} />}
         </div>
       ) : (
         <p>No class found.</p>
