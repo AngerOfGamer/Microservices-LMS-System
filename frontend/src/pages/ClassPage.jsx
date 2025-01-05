@@ -5,14 +5,14 @@ import ContentPage from "./ContentsPage"; // Import komponen ContentPage
 import AttendancePage from "./AttendancePage"; // Import komponen AttendancePage
 
 const ClassPage = () => {
-  const { class_id } = useParams(); // Ambil classId dari URL
+  const { class_id } = useParams(); // Ambil class_id dari URL
   const navigate = useNavigate();
   const [classDetails, setClassDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("content"); // Menentukan tab aktif
 
   useEffect(() => {
-    // Ambil data kelas berdasarkan classId
+    // Ambil data kelas berdasarkan class_id
     fetch(`http://localhost:5000/api/class/${class_id}`, {
       credentials: "include",  
     })
@@ -25,7 +25,7 @@ const ClassPage = () => {
         console.error("Error fetching class details:", error);
         setLoading(false); 
       });
-  }, [classId, navigate]);  
+  }, [class_id, navigate]); // Gunakan class_id di dependency array
 
   return (
     <div>
@@ -58,8 +58,8 @@ const ClassPage = () => {
           </ul>
 
           {/* Tab Contents */}
-          {activeTab === "contents" && <ContentPage classId={classId} />}
-          {activeTab === "attendance" && <AttendancePage classId={classId} />}
+          {activeTab === "contents" && <ContentPage classId={class_id} />}
+          {activeTab === "attendance" && <AttendancePage classId={class_id} />}
         </div>
       ) : (
         <p>No class found.</p>
