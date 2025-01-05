@@ -1,118 +1,104 @@
-import React, { useState } from "react";
-import "bootstrap/dist/css/bootstrap.min.css";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 
-function AttendancePage() {
-  const [date, setDate] = useState(""); // Menyimpan tanggal absensi
-  const [students, setStudents] = useState([
-    { id: 1, name: "John Doe", present: false },
-    { id: 2, name: "Jane Smith", present: false },
-    { id: 3, name: "Alice Brown", present: false },
-  ]);
+const AttendancePage = ({ role }) => {
+  const [date, setDate] = useState("");
+  const [students, setStudents] = useState([]);
   const [attendanceRecords, setAttendanceRecords] = useState([]);
+  const [attendance, setAttendance] = useState([]);
 
-  const saveAttendance = () => {
-    if (!date) {
-      alert("Tanggal harus diisi!");
-      return;
+  useEffect(() => {
+    // Fetch students and attendance records
+    const fetchData = async () => {
+      try {
+        const studentsRes = await axios.get("/api/users/students", { withCredentials: true });
+        setStudents(studentsRes.data);
+
+        const recordsRes =
+          role === "mahasiswa"
+            ? await axios.get("/api/attendance/records/student", { withCredentials: true })
+            : await axios.get("/api/attendance/records", { withCredentials: true });
+
+        setAttendanceRecords(recordsRes.data);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+      }
+    };
+    fetchData();
+  }, [role]);
+
+  const saveAttendance = async () => {
+    try {
+      await axios.post(
+        "/api/attendance/create",
+        { date, attendance },
+        { withCredentials: true }
+      );
+      alert("Absensi berhasil disimpan!");
+    } catch (err) {
+      console.error("Error saving attendance:", err);
+      alert("Gagal menyimpan absensi.");
     }
-
-    const records = students.map((student) => ({
-      date,
-      studentName: student.name,
-      status: student.present ? "present" : "absent",
-    }));
-
-    setAttendanceRecords([...attendanceRecords, ...records]);
-    resetForm();
   };
 
   const togglePresence = (id) => {
-    setStudents(
-      students.map((student) =>
-        student.id === id ? { ...student, present: !student.present } : student
-      )
+    setAttendance((prev) =>
+      prev.some((a) => a.studentId === id)
+        ? prev.map((a) =>
+            a.studentId === id ? { ...a, status: a.status === "present" ? "absent" : "present" } : a
+          )
+        : [...prev, { studentId: id, status: "present" }]
     );
-  };
-
-  const resetForm = () => {
-    setDate("");
-    setStudents(students.map((student) => ({ ...student, present: false })));
   };
 
   return (
     <div className="container mt-5">
       <h1 className="text-center">Attendance Management</h1>
-
-      <div className="row mt-4">
-        <div className="col-md-6 offset-md-3">
-          <h2>Manage Attendance</h2>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              saveAttendance();
-            }}
-            className="mb-4"
-          >
-            <div className="mb-3">
-              <label htmlFor="date" className="form-label">
-                Date
-              </label>
-              <input
-                type="date"
-                id="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="form-control"
-                required
-              />
-            </div>
-
-            <h3>Student List</h3>
-            <ul className="list-group mb-3">
-              {students.map((student) => (
-                <li key={student.id} className="list-group-item d-flex justify-content-between align-items-center">
-                  {student.name}
-                  <input
-                    type="checkbox"
-                    checked={student.present}
-                    onChange={() => togglePresence(student.id)}
-                  />
-                </li>
-              ))}
-            </ul>
-
-            <button type="submit" className="btn btn-primary">
-              Save Attendance
-            </button>
-          </form>
+      {role !== "mahasiswa" && (
+        <div className="mb-4">
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="form-control mb-2"
+          />
+          <ul>
+            {students.map((student) => (
+              <li key={student.id}>
+                {student.name}
+                <input
+                  type="checkbox"
+                  onChange={() => togglePresence(student.id)}
+                />
+              </li>
+            ))}
+          </ul>
+          <button onClick={saveAttendance} className="btn btn-primary">
+            Save Attendance
+          </button>
         </div>
-      </div>
-
-      <div className="row mt-4">
-        <div className="col-md-8 offset-md-2">
-          <h3>Attendance Records</h3>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Student Name</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {attendanceRecords.map((record, index) => (
-                <tr key={index}>
-                  <td>{record.date}</td>
-                  <td>{record.studentName}</td>
-                  <td>{record.status}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      )}
+      <h3>Attendance Records</h3>
+      <table className="table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Student Name</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {attendanceRecords.map((record, index) => (
+            <tr key={index}>
+              <td>{record.date}</td>
+              <td>{record.studentName}</td>
+              <td>{record.status}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
-}
+};
 
 export default AttendancePage;
