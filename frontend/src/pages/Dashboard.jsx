@@ -24,17 +24,19 @@ const Dashboard = () => {
 
   // Navigasi ke halaman kelas atau ke halaman create class
   const handleAddClass = () => {
-    navigate("/create-class"); // Navigasi ke halaman create class untuk Admin
+    navigate("/createClass"); // Navigasi ke halaman create class untuk Admin
   };
 
   return (
-    <div>
+    <div className="container">
       <h1>Dashboard</h1>
 
       {/* Menampilkan tombol "Create Class" hanya untuk Admin */}
       {userRole === "admin" && (
         <div style={{ marginBottom: "20px" }}>
-          <button onClick={handleAddClass}>Create Class</button>
+          <button onClick={handleAddClass} className="btn btn-primary">
+            Create Class
+          </button>
         </div>
       )}
 
@@ -43,19 +45,29 @@ const Dashboard = () => {
         {classes.length === 0 ? (
           <p>No classes available</p>
         ) : (
-          <ul>
+          <div className="row">
             {classes.map((cls) => (
-              <li key={cls.class_id}>
-                <h3>{cls.class_name}</h3>
-                <p>{cls.description}</p>
-                <button
-                  onClick={() => navigate(`/class/${cls.class_id}`)} // Mengarahkan ke halaman detail kelas
-                >
-                  View Details
-                </button>
-              </li>
+              <div className="col-md-4 mb-4" key={cls.class_id}>
+                <div className="card">
+                  <img
+                    src="https://via.placeholder.com/150"
+                    className="card-img-top"
+                    alt={cls.class_name}
+                  />
+                  <div className="card-body">
+                    <h5 className="card-title">{cls.class_name}</h5>
+                    <p className="card-text">{cls.description}</p>
+                    <button
+                      onClick={() => navigate(`/classPage/${cls.class_id}`)} // Mengarahkan ke halaman detail kelas
+                      className="btn btn-primary"
+                    >
+                      View Details
+                    </button>
+                  </div>
+                </div>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
       </div>
     </div>
