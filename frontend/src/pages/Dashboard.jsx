@@ -13,7 +13,7 @@ const Dashboard = () => {
       setUserRole(user.role); // Set role berdasarkan data yang ada di localStorage
     }
 
-    // Ambil data kelas yang relevan berdasarkan user_id
+    // Ambil data kelas yang relevan berdasarkan user_id (pastikan endpoint di backend sesuai)
     fetch("http://localhost:5000/api/class/user-classes", {
       credentials: "include", // Kirim session cookie ke backend
     })
