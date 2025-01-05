@@ -14,18 +14,18 @@ const ClassPage = () => {
   useEffect(() => {
     // Ambil data kelas berdasarkan classId
     fetch(`http://localhost:5000/api/class/${classId}`, {
-      credentials: "include",  // Kirim session cookie ke backend
+      credentials: "include",  
     })
       .then((response) => response.json())
       .then((data) => {
         setClassDetails(data);
-        setLoading(false); // Set loading false setelah data diambil
+        setLoading(false); 
       })
       .catch((error) => {
         console.error("Error fetching class details:", error);
-        setLoading(false); // Set loading false jika terjadi error
+        setLoading(false); 
       });
-  }, [classId, navigate]);  // Berjalan setiap kali classId atau navigate berubah
+  }, [classId, navigate]);  
 
   return (
     <div>
