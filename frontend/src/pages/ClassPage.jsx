@@ -9,16 +9,9 @@ const ClassPage = () => {
   const navigate = useNavigate();
   const [classDetails, setClassDetails] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("contents"); // Menentukan tab aktif
+  const [activeTab, setActiveTab] = useState("content"); // Menentukan tab aktif
 
   useEffect(() => {
-    // Memeriksa apakah pengguna sudah login
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (!user) {
-      navigate("/login"); // Pengguna tidak login, arahkan ke login
-      return; // Hentikan eksekusi lebih lanjut
-    }
-
     // Ambil data kelas berdasarkan classId
     fetch(`http://localhost:5000/api/class/${classId}`, {
       credentials: "include",  // Kirim session cookie ke backend
