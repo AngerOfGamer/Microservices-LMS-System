@@ -47,4 +47,16 @@ router.post("/", async (req, res) => {
   }
 });
 
+router.get("/roles", (req, res) => {
+  const sql = "SELECT user_id, username, role FROM users WHERE role IN ('dosen', 'mahasiswa')";
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error("Database error:", err);
+      return res.status(500).json({ message: "Kesalahan server" });
+    }
+
+    res.json({ users: results });
+  });
+});
+
 module.exports = router;

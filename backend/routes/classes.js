@@ -37,12 +37,39 @@ router.get("/", (req, res) => {
       return res.status(500).json({ error: "Kesalahan server" });
     }
 
-    // Jika tidak ada kelas ditemukan
-    if (results.length === 0) {
-      return res.json({ classes: [], message: "Tidak ada kelas ditemukan" });
+    res.json({ classes: results });
+  });
+});
+
+// Endpoint untuk membuat kelas baru
+router.post("/", (req, res) => {
+  const { class_name, description, selectedUsers } = req.body;
+
+  if (!class_name || !selectedUsers || selectedUsers.length === 0) {
+    return res.status(400).json({ message: "Nama kelas dan anggota wajib diisi" });
+  }
+
+  // Insert kelas baru
+  const sqlInsertClass = "INSERT INTO classes (class_name, description, created_at) VALUES (?, ?, NOW())";
+  db.query(sqlInsertClass, [class_name, description], (err, results) => {
+    if (err) {
+      console.error("Database error:", err);
+      return res.status(500).json({ message: "Kesalahan server saat membuat kelas" });
     }
 
-    res.json({ classes: results });
+    const classId = results.insertId;
+
+    // Insert anggota kelas ke tabel class_members
+    const classMembers = selectedUsers.map((user) => [user.user_id, classId, user.role, new Date()]);
+    const sqlInsertMembers = "INSERT INTO class_members (user_id, class_id, role, joined_at) VALUES ?";
+    db.query(sqlInsertMembers, [classMembers], (err) => {
+      if (err) {
+        console.error("Database error:", err);
+        return res.status(500).json({ message: "Kesalahan server saat menambahkan anggota kelas" });
+      }
+
+      res.status(201).json({ message: "Kelas berhasil dibuat beserta anggota" });
+    });
   });
 });
 
