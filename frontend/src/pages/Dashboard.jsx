@@ -1,52 +1,75 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import "bootstrap/dist/css/bootstrap.min.css";
-import NavBar from "../components/NavBar";
 
 const Dashboard = () => {
+  const [userRole, setUserRole] = useState(""); // Menyimpan role pengguna
+  const [classes, setClasses] = useState([]); // Menyimpan kelas yang ada
   const navigate = useNavigate();
 
-  const handleCardClick = () => {
-    navigate(`/class`); // Navigasi ke halaman kelas (atau tambahkan logika sesuai kebutuhan)
-  };
+  useEffect(() => {
+    // Ambil data user dari localStorage setelah login
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (user) {
+      setUserRole(user.role); // Set role berdasarkan data yang ada di localStorage
+    }
 
-  const handleAddClassClick = () => {
-    navigate(`/createClass`); // Path sesuai dengan yang didefinisikan di classRoutes.js
+    // Ambil data kelas yang relevan berdasarkan user_id
+    fetch("http://localhost:5000/api/class/user-classes", {
+      credentials: "include", // Kirim session cookie ke backend
+    })
+      .then((response) => response.json())
+      .then((data) => setClasses(data)) // Menyimpan data kelas ke state
+      .catch((error) => console.error("Error fetching classes:", error));
+  }, []); // UseEffect berjalan sekali saat komponen pertama kali render
+
+  // Navigasi ke halaman kelas atau ke halaman create class
+  const handleAddClass = () => {
+    navigate("/createClass"); // Navigasi ke halaman create class untuk Admin
   };
 
   return (
-    <div>
-      <NavBar />
-      <div className="row">
-        <div className="col-md-4 mb-4">
-          <div
-            className="card"
-            onClick={handleCardClick}
-            style={{ cursor: "pointer" }}
-          >
-          </div>
-        </div>
-      </div>
+    <div className="container">
+      <h1>Dashboard</h1>
 
-      {/* Tombol Tambah */}
-      <button
-        onClick={handleAddClassClick}
-        className="btn btn-primary"
-        style={{
-          position: "fixed",
-          bottom: "20px",
-          right: "20px",
-          borderRadius: "50%",
-          width: "60px",
-          height: "60px",
-          fontSize: "24px",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        +
-      </button>
+      {/* Menampilkan tombol "Create Class" hanya untuk Admin */}
+      {userRole === "admin" && (
+        <div style={{ marginBottom: "20px" }}>
+          <button onClick={handleAddClass} className="btn btn-primary">
+            Create Class
+          </button>
+        </div>
+      )}
+
+      <div>
+        <h2>Classes</h2>
+        {classes.length === 0 ? (
+          <p>No classes available</p>
+        ) : (
+          <div className="row">
+            {classes.map((cls) => (
+              <div className="col-md-4 mb-4" key={cls.class_id}>
+                <div className="card">
+                  <img
+                    src="https://via.placeholder.com/150"
+                    className="card-img-top"
+                    alt={cls.class_name}
+                  />
+                  <div className="card-body">
+                    <h5 className="card-title">{cls.class_name}</h5>
+                    <p className="card-text">{cls.description}</p>
+                    <button
+                      onClick={() => navigate(`/classPage/${cls.class_id}`)} // Mengarahkan ke halaman detail kelas
+                      className="btn btn-primary"
+                    >
+                      View Details
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

@@ -1,24 +1,33 @@
 const express = require("express");
 const db = require("../db");
-
 const router = express.Router();
 
-// Get all classes
-router.get("/", (req, res) => {
-  const sql = "SELECT * FROM classes";
-  db.query(sql, (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(results);
-  });
-});
+// Middleware untuk memeriksa apakah pengguna sudah login
+const isLoggedIn = (req, res, next) => {
+  if (req.session.user) {
+    return next(); // Pengguna sudah login, lanjutkan request
+  } else {
+    return res.status(401).json({ error: "You must be logged in" }); // Pengguna belum login
+  }
+};
 
-// Add a new class
-router.post("/", (req, res) => {
-  const { class_name, description } = req.body;
-  const sql = "INSERT INTO classes (class_name, description) VALUES (?, ?)";
-  db.query(sql, [class_name, description], (err, result) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json({ id: result.insertId, class_name, description });
+// Endpoint untuk mengambil kelas yang diikuti oleh pengguna
+router.get("/user-classes", isLoggedIn, (req, res) => {
+  const userId = req.session.user.user_id; // Ambil user_id dari session
+
+  // Query untuk mendapatkan kelas yang diikuti oleh pengguna
+  const sql = `
+    SELECT c.class_id, c.class_name, c.description
+    FROM classes c
+    JOIN class_members cm ON c.class_id = cm.class_id
+    WHERE cm.user_id = ?;
+  `;
+  
+  db.query(sql, [userId], (err, results) => {
+    if (err) {
+      return res.status(500).json({ message: "Terjadi kesalahan pada server." });
+    }
+    res.json(results); // Mengembalikan kelas yang diikuti oleh pengguna
   });
 });
 

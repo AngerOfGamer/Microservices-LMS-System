@@ -1,7 +1,8 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const cors = require("cors");
 const config = require("./config");
+const session = require("express-session");
+const cookieParser = require("cookie-parser");
 
 const absensiRoutes = require("./routes/absensi");
 const authRoutes = require("./routes/auth");
@@ -11,8 +12,25 @@ const userRoutes = require("./routes/user");
 
 const app = express();
 
+// Middleware untuk session dan cookie
+app.use(cookieParser());  // Untuk parsing cookie
+app.use(
+  session({
+    secret: "yourSecretKey",  // Ganti dengan key rahasia yang kuat
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false },  // Set to true if using https
+  })
+);
+
 // Middleware
-app.use(cors());
+const cors = require("cors");
+app.use(
+  cors({
+    origin: "http://localhost:3000", // URL frontend Anda
+    credentials: true, // Izinkan pengiriman cookie
+  })
+);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
