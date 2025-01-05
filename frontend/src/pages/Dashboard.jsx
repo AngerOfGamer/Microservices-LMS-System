@@ -64,7 +64,7 @@ const DashboardPage = () => {
           {user.role === "admin" && (
             <div>
               <button
-                onClick={() => navigate("/create-class")}
+                onClick={() => navigate("/createClass")}
                 className="bg-blue-500 text-white py-2 px-4 rounded mb-4"
               >
                 Buat Kelas
