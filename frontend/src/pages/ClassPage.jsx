@@ -1,59 +1,40 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import NavBar from "../components/NavBar";
-import ContentPage from "./ContentsPage";
-import AttendancePage from "./AttendancePage";
 
 const ClassPage = () => {
-  const { classId } = useParams(); // Ambil classId dari URL
-  const [activeTab, setActiveTab] = useState("contents");
-  const [classDetails, setClassDetails] = useState(null); // Menyimpan detail kelas
+  const { classId } = useParams();  // Ambil classId dari URL
+  const navigate = useNavigate();
+  const [classDetails, setClassDetails] = useState(null);
 
   useEffect(() => {
+    // Memeriksa apakah pengguna sudah login sebelum mengambil data kelas
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (!user) {
+      navigate("/login"); // Pengguna tidak login, arahkan ke login
+    }
+
     // Ambil data kelas berdasarkan classId
-    fetch(`http://localhost:5000/api/class/${classId}`)
+    fetch(`http://localhost:5000/api/class/${classId}`, {
+      credentials: "include",  // Kirim session cookie ke backend
+    })
       .then((response) => response.json())
       .then((data) => setClassDetails(data))
       .catch((error) => console.error("Error fetching class details:", error));
-  }, [classId]); // Menjalankan setiap kali classId berubah
+  }, [classId, navigate]);  // Berjalan setiap kali classId atau navigate berubah
 
   return (
     <div>
       <NavBar />
-
-      {/* Tampilkan detail kelas */}
-      {classDetails && (
-        <div className="class-details mb-4">
+      {classDetails ? (
+        <div className="container">
           <h2>{classDetails.class_name}</h2>
           <p>{classDetails.description}</p>
+          {/* Tambahkan tab konten atau lainnya di sini */}
         </div>
+      ) : (
+        <p>Loading...</p>
       )}
-
-      {/* Tabs Navigation */}
-      <ul className="nav nav-tabs mb-4">
-        <li className="nav-item">
-          <button
-            className={`nav-link ${activeTab === "contents" ? "active" : ""}`}
-            onClick={() => setActiveTab("contents")}
-          >
-            Contents
-          </button>
-        </li>
-        <li className="nav-item">
-          <button
-            className={`nav-link ${activeTab === "attendance" ? "active" : ""}`}
-            onClick={() => setActiveTab("attendance")}
-          >
-            Attendance
-          </button>
-        </li>
-      </ul>
-
-      {/* Tab Contents */}
-      <div>
-        {activeTab === "contents" && <ContentPage classId={classId} />}
-        {activeTab === "attendance" && <AttendancePage classId={classId} />}
-      </div>
     </div>
   );
 };
