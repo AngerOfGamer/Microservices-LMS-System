@@ -13,12 +13,12 @@ const Dashboard = () => {
       setUserRole(user.role); // Set role berdasarkan data yang ada di localStorage
     }
 
-    // Ambil data kelas
-    fetch("http://localhost:5000/api/class", {
+    // Ambil data kelas yang relevan berdasarkan user_id
+    fetch("http://localhost:5000/api/class/user-classes", {
       credentials: "include", // Kirim session cookie ke backend
     })
       .then((response) => response.json())
-      .then((data) => setClasses(data))
+      .then((data) => setClasses(data)) // Menyimpan data kelas ke state
       .catch((error) => console.error("Error fetching classes:", error));
   }, []); // UseEffect berjalan sekali saat komponen pertama kali render
 
@@ -58,10 +58,10 @@ const Dashboard = () => {
                     <h5 className="card-title">{cls.class_name}</h5>
                     <p className="card-text">{cls.description}</p>
                     <button
-                      onClick={() => navigate(`/class/${cls.class_id}`)} // Mengarahkan ke halaman detail kelas
+                      onClick={() => navigate(`/classPage/${cls.class_id}`)} // Mengarahkan ke halaman detail kelas
                       className="btn btn-primary"
                     >
-                      Lihat Kelas
+                      View Details
                     </button>
                   </div>
                 </div>

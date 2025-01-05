@@ -1,5 +1,5 @@
 const express = require("express");
-const db = require("../db"); // Pastikan path ke database sudah benar
+const db = require("../db");
 const router = express.Router();
 
 // Middleware untuk memeriksa apakah pengguna sudah login
@@ -11,21 +11,23 @@ const isLoggedIn = (req, res, next) => {
   }
 };
 
-// Route untuk mengambil data kelas berdasarkan classId
-router.get("/class/:classId", isLoggedIn, (req, res) => {
-  const { classId } = req.params; // Ambil classId dari URL params
+// Endpoint untuk mengambil kelas yang diikuti oleh pengguna
+router.get("/user-classes", isLoggedIn, (req, res) => {
+  const userId = req.session.user.user_id; // Ambil user_id dari session
 
-  // Query untuk mengambil kelas berdasarkan ID
-  const sql = "SELECT * FROM classes WHERE class_id = ?";
+  // Query untuk mendapatkan kelas yang diikuti oleh pengguna
+  const sql = `
+    SELECT c.class_id, c.class_name, c.description
+    FROM classes c
+    JOIN class_members cm ON c.class_id = cm.class_id
+    WHERE cm.user_id = ?;
+  `;
   
-  db.query(sql, [classId], (err, results) => {
+  db.query(sql, [userId], (err, results) => {
     if (err) {
-      return res.status(500).json({ error: "Server error" }); // Error server
+      return res.status(500).json({ message: "Terjadi kesalahan pada server." });
     }
-    if (results.length === 0) {
-      return res.status(404).json({ error: "Class not found" }); // Kelas tidak ditemukan
-    }
-    res.json(results[0]); // Kembalikan data kelas yang ditemukan
+    res.json(results); // Mengembalikan kelas yang diikuti oleh pengguna
   });
 });
 
