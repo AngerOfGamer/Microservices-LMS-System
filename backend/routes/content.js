@@ -1,31 +1,7 @@
 const express = require("express");
-const multer = require("multer");
-const path = require("path");
 const db = require("../db");
 
 const router = express.Router();
-
-// Konfigurasi Multer untuk upload file
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/");
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, `${uniqueSuffix}-${file.originalname}`);
-  },
-});
-
-const upload = multer({
-  storage,
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = ["image/jpeg", "image/png", "application/pdf"];
-    if (!allowedTypes.includes(file.mimetype)) {
-      return cb(new Error("Invalid file type. Only JPEG, PNG, and PDF are allowed."));
-    }
-    cb(null, true);
-  },
-});
 
 // Middleware untuk validasi header autentikasi
 const authenticate = (req, res, next) => {
@@ -55,22 +31,21 @@ router.get("/", (req, res) => {
   });
 });
 
-// Menambahkan konten (materi/tugas)
-router.post("/", upload.single("file"), (req, res) => {
+// Menambahkan konten baru (materi/tugas)
+router.post("/", (req, res) => {
   const { username } = req.user;
   const { class_id, content_title, content_description, content_type } = req.body;
 
+  // Validasi input
   if (!class_id || !content_title || !content_description || !content_type) {
     return res.status(400).json({ error: "Missing required fields" });
   }
 
-  const filePath = req.file ? path.join("uploads", req.file.filename) : null;
-
   const sql = `
-    INSERT INTO content (class_id, content_title, content_description, content_url, created_by, content_type)
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO content (class_id, content_title, content_description, created_by, content_type)
+    VALUES (?, ?, ?, ?, ?)
   `;
-  db.query(sql, [class_id, content_title, content_description, filePath, username, content_type], (err, result) => {
+  db.query(sql, [class_id, content_title, content_description, username, content_type], (err, result) => {
     if (err) return res.status(500).json({ error: err.message });
     res.status(201).json({ message: "Content added successfully", content_id: result.insertId });
   });
@@ -100,7 +75,7 @@ router.delete("/:content_id", (req, res) => {
 //    RUTE KHUSUS TUGAS
 // ==========================
 
-// Mengirim tugas dan notifikasi ke mahasiswa
+// Menambahkan tugas baru dan mengirim notifikasi ke mahasiswa
 router.post("/assign-task", (req, res) => {
   const { username, role } = req.user;
 
@@ -110,13 +85,14 @@ router.post("/assign-task", (req, res) => {
 
   const { class_id, task_title, task_description, submission_deadline } = req.body;
 
+  // Validasi input
   if (!class_id || !task_title || !task_description || !submission_deadline) {
     return res.status(400).json({ error: "Missing required fields" });
   }
 
   const insertTaskQuery = `
-    INSERT INTO submissions (task_title, class_id, user_id, submission_url, submission_date)
-    VALUES (?, ?, ?, NULL, NOW())
+    INSERT INTO submissions (task_title, class_id, user_id, submission_date)
+    VALUES (?, ?, ?, NOW())
   `;
   db.query(insertTaskQuery, [task_title, class_id, username], (err, taskResult) => {
     if (err) return res.status(500).json({ error: err.message });

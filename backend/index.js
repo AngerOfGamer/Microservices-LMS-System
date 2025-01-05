@@ -10,6 +10,8 @@ const classesRoutes = require("./routes/classes");
 const contentRoutes = require("./routes/content");
 const userRoutes = require("./routes/user");
 const notificationsRoutes = require("./routes/notifications");
+const nilaiRoutes = require("./routes/nilai");
+const submissionRoutes = require("./routes/submissions");
 
 const app = express();
 
@@ -42,6 +44,7 @@ app.use("/api/classes", classesRoutes);
 app.use("/api/content", contentRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/notifications", notificationsRoutes);
+app.use("/api/nilai",nilaiRoutes)
 
 // Server
 const PORT = config.port;
