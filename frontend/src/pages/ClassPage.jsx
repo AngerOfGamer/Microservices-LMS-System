@@ -6,7 +6,6 @@ import AttendancePage from "./AttendancePage"; // Import komponen AttendancePage
 
 const ClassPage = () => {
   const { class_id } = useParams(); // Ambil class_id dari URL
-  const navigate = useNavigate();
   const [classDetails, setClassDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("content"); // Menentukan tab aktif
