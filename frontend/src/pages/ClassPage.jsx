@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import NavBar from "../components/NavBar";
-import ContentPage from "./ContentPage"; // Import komponen ContentPage
+import ContentPage from "./ContentsPage"; // Import komponen ContentPage
 import AttendancePage from "./AttendancePage"; // Import komponen AttendancePage
 
 const ClassPage = () => {
