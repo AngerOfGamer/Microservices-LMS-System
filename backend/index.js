@@ -9,6 +9,7 @@ const authRoutes = require("./routes/auth");
 const classesRoutes = require("./routes/classes");
 const contentRoutes = require("./routes/content");
 const userRoutes = require("./routes/user");
+const notificationsRoutes = require("./routes/notifications");
 
 const app = express();
 
@@ -40,6 +41,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/classes", classesRoutes);
 app.use("/api/content", contentRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/notifications", notificationsRoutes);
 
 // Server
 const PORT = config.port;

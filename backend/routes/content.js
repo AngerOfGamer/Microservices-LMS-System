@@ -27,62 +27,59 @@ const upload = multer({
   },
 });
 
-// Rute: Mendapatkan semua konten
-router.get("/", (req, res) => {
-  const username = req.headers["username"];
-  const role = req.headers["role"];
-
-  // Cek autentikasi
+// Middleware untuk validasi header autentikasi
+const authenticate = (req, res, next) => {
+  const { username, role } = req.headers;
   if (!username || !role) {
     return res.status(401).json({ error: "Unauthorized: Missing username or role in headers" });
   }
+  req.user = { username, role };
+  next();
+};
 
-  const sql = "SELECT * FROM content";
+router.use(authenticate);
+
+// ==========================
+//    RUTE UNTUK KONTEN
+// ==========================
+
+// Mendapatkan semua konten (materi dan tugas)
+router.get("/", (req, res) => {
+  const sql = `
+    SELECT * FROM content
+    ORDER BY created_at DESC
+  `;
   db.query(sql, (err, results) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(results);
   });
 });
 
+// Menambahkan konten (materi/tugas)
 router.post("/", upload.single("file"), (req, res) => {
-  const username = req.headers["username"];
-  const role = req.headers["role"];
-
-  // Validasi autentikasi
-  if (!username || !role) {
-    return res.status(401).json({ error: "Unauthorized: Missing username or role in headers" });
-  }
-
-  // Validasi input
+  const { username } = req.user;
   const { class_id, content_title, content_description, content_type } = req.body;
+
   if (!class_id || !content_title || !content_description || !content_type) {
     return res.status(400).json({ error: "Missing required fields" });
   }
 
-  const created_by = username; // Gunakan username dari header
   const filePath = req.file ? path.join("uploads", req.file.filename) : null;
 
   const sql = `
     INSERT INTO content (class_id, content_title, content_description, content_url, created_by, content_type)
     VALUES (?, ?, ?, ?, ?, ?)
   `;
-  db.query(sql, [class_id, content_title, content_description, filePath, created_by, content_type], (err, result) => {
+  db.query(sql, [class_id, content_title, content_description, filePath, username, content_type], (err, result) => {
     if (err) return res.status(500).json({ error: err.message });
     res.status(201).json({ message: "Content added successfully", content_id: result.insertId });
   });
 });
 
-// Rute: Menghapus konten (hanya admin dan dosen)
+// Menghapus konten (materi/tugas)
 router.delete("/:content_id", (req, res) => {
-  const username = req.headers["username"];
-  const role = req.headers["role"];
+  const { role } = req.user;
 
-  // Cek autentikasi
-  if (!username || !role) {
-    return res.status(401).json({ error: "Unauthorized: Missing username or role in headers" });
-  }
-
-  // Cek otorisasi
   if (!["admin", "dosen"].includes(role)) {
     return res.status(403).json({ message: "Forbidden: You do not have access to this resource." });
   }
@@ -91,14 +88,74 @@ router.delete("/:content_id", (req, res) => {
 
   const sql = "DELETE FROM content WHERE content_id = ?";
   db.query(sql, [content_id], (err, result) => {
-    if (err) {
-      console.error("Error deleting content:", err.message);
-      return res.status(500).json({ message: "Internal server error" });
-    }
+    if (err) return res.status(500).json({ message: "Internal server error" });
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: "Content not found." });
     }
     res.json({ message: "Content successfully deleted." });
+  });
+});
+
+// ==========================
+//    RUTE KHUSUS TUGAS
+// ==========================
+
+// Mengirim tugas dan notifikasi ke mahasiswa
+router.post("/assign-task", (req, res) => {
+  const { username, role } = req.user;
+
+  if (role !== "dosen") {
+    return res.status(403).json({ error: "Forbidden: Only dosen can assign tasks" });
+  }
+
+  const { class_id, task_title, task_description, submission_deadline } = req.body;
+
+  if (!class_id || !task_title || !task_description || !submission_deadline) {
+    return res.status(400).json({ error: "Missing required fields" });
+  }
+
+  const insertTaskQuery = `
+    INSERT INTO submissions (task_title, class_id, user_id, submission_url, submission_date)
+    VALUES (?, ?, ?, NULL, NOW())
+  `;
+  db.query(insertTaskQuery, [task_title, class_id, username], (err, taskResult) => {
+    if (err) return res.status(500).json({ error: err.message });
+
+    const taskId = taskResult.insertId;
+
+    const getStudentsQuery = `
+      SELECT user_id FROM class_members WHERE class_id = ? AND role = 'mahasiswa'
+    `;
+    db.query(getStudentsQuery, [class_id], (err, students) => {
+      if (err) return res.status(500).json({ error: err.message });
+
+      if (students.length === 0) {
+        return res.status(200).json({
+          message: "Task assigned, but no students found in the class.",
+          task_id: taskId,
+        });
+      }
+
+      const notifications = students.map((student) => [
+        student.user_id,
+        `Tugas Baru: ${task_title}`,
+        `Tugas baru telah diberikan oleh dosen. Deskripsi: ${task_description}. Batas waktu: ${submission_deadline}.`,
+        "info",
+      ]);
+
+      const insertNotificationsQuery = `
+        INSERT INTO notifications (user_id, title, message, type, is_read, created_at)
+        VALUES ?
+      `;
+      db.query(insertNotificationsQuery, [notifications], (err) => {
+        if (err) return res.status(500).json({ error: err.message });
+
+        res.status(201).json({
+          message: "Task assigned and notifications sent successfully.",
+          task_id: taskId,
+        });
+      });
+    });
   });
 });
 
