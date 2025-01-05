@@ -75,12 +75,9 @@ router.post("/", (req, res) => {
 
 router.get("/:class_id", (req, res) => {
   const { class_id } = req.params;
+  console.log("Permintaan diterima dengan class_id:", class_id);
 
-  console.log("Menerima permintaan untuk class_id:", class_id);
-
-  const sqlClass = `
-    SELECT * FROM classes WHERE class_id = ?;
-  `;
+  const sqlClass = `SELECT * FROM classes WHERE class_id = ?;`;
   const sqlMembers = `
     SELECT u.user_id, u.username, cm.role
     FROM class_members cm
@@ -89,8 +86,14 @@ router.get("/:class_id", (req, res) => {
   `;
 
   db.query(sqlClass, [class_id], (err, classResults) => {
-    if (err || classResults.length === 0) {
+    if (err) {
       console.error("Kesalahan query kelas:", err);
+      return res.status(500).json({ message: "Kesalahan server saat memuat kelas" });
+    }
+
+    console.log("Hasil query kelas:", classResults);
+
+    if (classResults.length === 0) {
       return res.status(404).json({ message: "Kelas tidak ditemukan" });
     }
 
@@ -99,6 +102,8 @@ router.get("/:class_id", (req, res) => {
         console.error("Kesalahan query anggota kelas:", err);
         return res.status(500).json({ message: "Kesalahan server saat memuat anggota kelas" });
       }
+
+      console.log("Hasil query anggota kelas:", memberResults);
 
       res.json({
         class: {

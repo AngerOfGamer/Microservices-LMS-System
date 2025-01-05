@@ -13,13 +13,13 @@ const userRoutes = require("./routes/user");
 const app = express();
 
 // Middleware untuk session dan cookie
-app.use(cookieParser());  // Untuk parsing cookie
+app.use(cookieParser());  
 app.use(
   session({
-    secret: "yourSecretKey",  // Ganti dengan key rahasia yang kuat
+    secret: "yourSecretKey",  
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false },  // Set to true if using https
+    cookie: { secure: false },  
   })
 );
 
@@ -27,8 +27,8 @@ app.use(
 const cors = require("cors");
 app.use(
   cors({
-    origin: "http://localhost:3000", // URL frontend Anda
-    credentials: true, // Izinkan pengiriman cookie
+    origin: "http://localhost:3000", 
+    credentials: true, 
   })
 );
 app.use(bodyParser.json());
