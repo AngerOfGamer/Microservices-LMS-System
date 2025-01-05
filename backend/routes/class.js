@@ -6,10 +6,13 @@ const router = express.Router();
 // Middleware untuk role authorization
 const authorizeRoles = (roles) => (req, res, next) => {
   const userRole = req.session.user?.role; // Ambil role dari session
+  if (!userRole) {
+    return res.status(401).json({ message: "You must be logged in to access this resource." });
+  }
   if (roles.includes(userRole)) {
     next();
   } else {
-    res.status(403).json({ message: "Anda tidak memiliki akses ke fitur ini." });
+    res.status(403).json({ message: "You do not have access to this feature." });
   }
 };
 
@@ -21,7 +24,7 @@ router.get("/", (req, res) => {
       console.error("Database error:", err.message);
       return res.status(500).json({ message: "Terjadi kesalahan pada server." });
     }
-    res.json(results);
+    res.json(results); // Mengirimkan data kelas ke frontend
   });
 });
 
@@ -34,12 +37,11 @@ router.post("/", authorizeRoles(["admin"]), (req, res) => {
     return res.status(400).json({ message: "Class name and description are required." });
   }
 
-  // Insert kelas baru ke dalam database
   const sql = "INSERT INTO classes (class_name, description) VALUES (?, ?)";
   db.query(sql, [class_name, description], (err, result) => {
     if (err) {
       console.error("Database error:", err.message);
-      return res.status(500).json({ message: "Terjadi kesalahan pada server." });
+      return res.status(500).json({ message: "There was a problem creating the class." });
     }
     res.status(201).json({ message: "Class successfully created.", class_id: result.insertId });
   });
@@ -48,7 +50,7 @@ router.post("/", authorizeRoles(["admin"]), (req, res) => {
 // Endpoint untuk menambahkan anggota kelas (dosen dan mahasiswa) ke kelas tertentu (akses Admin)
 router.post("/:class_id/participants", authorizeRoles(["admin"]), (req, res) => {
   const { class_id } = req.params;
-  const { user_id, role } = req.body;  // role bisa "dosen" atau "mahasiswa"
+  const { user_id, role } = req.body; // role bisa "dosen" atau "mahasiswa"
 
   // Validasi input
   if (!user_id || !role || !["dosen", "mahasiswa"].includes(role)) {
@@ -60,7 +62,7 @@ router.post("/:class_id/participants", authorizeRoles(["admin"]), (req, res) => 
   db.query(sql, [class_id, user_id, role], (err, result) => {
     if (err) {
       console.error("Database error:", err.message);
-      return res.status(500).json({ message: "Terjadi kesalahan pada server." });
+      return res.status(500).json({ message: "There was an issue adding the participant." });
     }
     res.status(201).json({ message: "User successfully added to the class." });
   });
@@ -75,13 +77,13 @@ router.get("/:class_id/participants", authorizeRoles(["admin", "dosen"]), (req, 
     FROM class_members 
     JOIN users ON class_members.user_id = users.user_id 
     WHERE class_members.class_id = ?`;
-  
+
   db.query(sql, [class_id], (err, results) => {
     if (err) {
       console.error("Database error:", err.message);
-      return res.status(500).json({ message: "Terjadi kesalahan pada server." });
+      return res.status(500).json({ message: "There was a problem fetching participants." });
     }
-    res.json(results);
+    res.json(results); // Mengirimkan data anggota kelas ke frontend
   });
 });
 

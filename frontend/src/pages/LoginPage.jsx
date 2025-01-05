@@ -26,12 +26,8 @@ const LoginPage = () => {
         // Simpan data user ke localStorage
         localStorage.setItem("user", JSON.stringify(data.user));
 
-        // Cek role dan navigasi ke halaman yang sesuai
-        if (data.user.role === "admin") {
-          navigate("/dashboard"); // Jika Admin, arahkan ke Dashboard
-        } else {
-          navigate("/class"); // Jika bukan Admin, arahkan ke halaman kelas
-        }
+        // Arahkan pengguna ke halaman yang sesuai
+        navigate("/dashboard");
       } else {
         const errorData = await response.json();
         setError(errorData.error || errorData.message); // Tampilkan pesan error

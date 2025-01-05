@@ -33,7 +33,9 @@ const Dashboard = () => {
 
       {/* Menampilkan tombol "Create Class" hanya untuk Admin */}
       {userRole === "admin" && (
-        <button onClick={handleAddClass}>Create Class</button>
+        <div style={{ marginBottom: "20px" }}>
+          <button onClick={handleAddClass}>Create Class</button>
+        </div>
       )}
 
       <div>
@@ -44,7 +46,13 @@ const Dashboard = () => {
           <ul>
             {classes.map((cls) => (
               <li key={cls.class_id}>
-                {cls.class_name} - {cls.description}
+                <h3>{cls.class_name}</h3>
+                <p>{cls.description}</p>
+                <button
+                  onClick={() => navigate(`/class/${cls.class_id}`)} // Mengarahkan ke halaman detail kelas
+                >
+                  View Details
+                </button>
               </li>
             ))}
           </ul>
