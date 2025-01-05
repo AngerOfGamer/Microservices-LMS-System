@@ -1,7 +1,18 @@
 const express = require("express");
 const db = require("../db");
+const session = require("express-session"); // Import express-session
 
 const router = express.Router();
+
+// Setup express-session
+router.use(
+  session({
+    secret: "your_secret_key", // Ganti dengan key yang lebih kuat
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false, httpOnly: true }, // secure: true jika menggunakan HTTPS
+  }),
+);
 
 // Login user
 router.post("/login", (req, res) => {
@@ -14,23 +25,14 @@ router.post("/login", (req, res) => {
   const sql = "SELECT * FROM users WHERE username = ? AND nip_nim = ?";
   db.query(sql, [username, nip_nim], (err, results) => {
     if (err) return res.status(500).json({ error: err.message });
-    if (results.length === 0) return res.status(401).json({ error: "Invalid credentials" });
+    if (results.length === 0)
+      return res.status(401).json({ error: "Invalid credentials" });
+
+    // Menyimpan informasi user dalam session
+    req.session.user = results[0];
+
+    // Mengirim response dengan data user dan pesan login sukses
     res.json({ message: "Login successful", user: results[0] });
-  });
-});
-
-// Register user
-router.post("/register", (req, res) => {
-  const { username, nip_nim, role } = req.body;
-
-  if (!username || !nip_nim || !role) {
-    return res.status(400).json({ error: "All fields are required" });
-  }
-
-  const sql = "INSERT INTO users (username, nip_nim, role) VALUES (?, ?, ?)";
-  db.query(sql, [username, nip_nim, role], (err, result) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.status(201).json({ message: "User registered successfully", user_id: result.insertId });
   });
 });
 

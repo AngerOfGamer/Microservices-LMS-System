@@ -5,7 +5,7 @@ const LoginPage = () => {
   const navigate = useNavigate();
 
   const [username, setUsername] = useState("");
-  const [nip_nim, setNipNim] = useState(""); // Ubah nipNim menjadi nip_nim
+  const [nip_nim, setNipNim] = useState(""); // Gunakan nip_nim sesuai variabel backend
   const [error, setError] = useState("");
 
   const handleLogin = async () => {
@@ -16,7 +16,7 @@ const LoginPage = () => {
           "Content-Type": "application/json",
         },
         credentials: "include", // Kirim session cookie ke backend
-        body: JSON.stringify({ username, nip_nim }), // Sesuaikan dengan nama variabel backend
+        body: JSON.stringify({ username, nip_nim }), // Kirim data login ke backend
       });
 
       if (response.ok) {
@@ -26,11 +26,11 @@ const LoginPage = () => {
         // Simpan data user ke localStorage
         localStorage.setItem("user", JSON.stringify(data.user));
 
-        // Navigasi ke dashboard
+        // Navigasi ke dashboard setelah login sukses
         navigate("/dashboard");
       } else {
         const errorData = await response.json();
-        setError(errorData.message); // Tampilkan pesan error
+        setError(errorData.error || errorData.message); // Tampilkan pesan error jika login gagal
       }
     } catch (err) {
       console.error("Error saat login:", err);
