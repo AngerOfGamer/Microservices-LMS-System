@@ -15,6 +15,10 @@ const isLoggedIn = (req, res, next) => {
 router.get("/user-classes", isLoggedIn, (req, res) => {
   const userId = req.session.user.user_id; // Ambil user_id dari session
 
+  if (!userId) {
+    return res.status(401).json({ message: "User not authenticated" });
+  }
+  
   // Query untuk mendapatkan kelas yang diikuti oleh pengguna
   const sql = `
     SELECT c.class_id, c.class_name, c.description
