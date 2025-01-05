@@ -72,7 +72,7 @@ const DashboardPage = () => {
             </div>
           )}
 
-          {/* Fitur Dosen/Mahasiswa: Tampilkan Kelas */}
+          {/* Tampilkan Card Kelas */}
           <h2 className="text-xl font-bold mb-4">
             {user.role === "admin" ? "Semua Kelas" : "Kelas yang Anda Ikuti"}
           </h2>
@@ -83,7 +83,8 @@ const DashboardPage = () => {
               {classes.map((classItem) => (
                 <div
                   key={classItem.class_id}
-                  className="bg-white shadow-lg rounded-lg p-4"
+                  className="bg-white shadow-lg rounded-lg p-4 cursor-pointer"
+                  onClick={() => navigate(`/class/${classItem.class_id}`)} // Navigasi ke halaman ClassPage
                 >
                   <h3 className="text-lg font-bold">{classItem.class_name}</h3>
                   <p>{classItem.description}</p>
