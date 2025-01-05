@@ -1,77 +1,118 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const Dashboard = () => {
-  const [userRole, setUserRole] = useState(""); // Menyimpan role pengguna
-  const [classes, setClasses] = useState([]); // Menyimpan kelas yang ada
+const DashboardPage = () => {
   const navigate = useNavigate();
+  const [user, setUser] = useState(null); // Data user dari localStorage
+  const [classes, setClasses] = useState([]); // Data kelas
+  const [loading, setLoading] = useState(true); // Status loading
+  const [error, setError] = useState(""); // Pesan error
 
+  // Ambil data user dari localStorage dan data kelas
   useEffect(() => {
-    // Ambil data user dari localStorage setelah login
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (user) {
-      setUserRole(user.role); // Set role berdasarkan data yang ada di localStorage
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+      fetchClasses(JSON.parse(storedUser).role);
+    } else {
+      navigate("/login"); // Arahkan ke halaman login jika belum login
     }
+  }, [navigate]);
 
-    // Ambil data kelas yang relevan berdasarkan user_id (pastikan endpoint di backend sesuai)
-    fetch("http://localhost:5000/api/class/user-classes", {
-      credentials: "include", // Kirim session cookie ke backend
-    })
-      .then((response) => response.json())
-      .then((data) => setClasses(data)) // Menyimpan data kelas ke state
-      .catch((error) => console.error("Error fetching classes:", error));
-  }, []); // UseEffect berjalan sekali saat komponen pertama kali render
+  // Fungsi fetch kelas berdasarkan role user
+  const fetchClasses = async (role) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/classes`, {
+        method: "GET",
+        credentials: "include", // Kirim session cookie
+      });
 
-  // Navigasi ke halaman kelas atau ke halaman create class
-  const handleAddClass = () => {
-    navigate("/createClass"); // Navigasi ke halaman create class untuk Admin
+      if (response.ok) {
+        const data = await response.json();
+        setClasses(data.classes);
+      } else {
+        const errorData = await response.json();
+        setError(errorData.message || "Gagal memuat kelas");
+      }
+    } catch (err) {
+      console.error("Error fetching classes:", err);
+      setError("Terjadi kesalahan. Silakan coba lagi.");
+    } finally {
+      setLoading(false); // Matikan loading
+    }
   };
 
+  // Fungsi logout
+  const handleLogout = async () => {
+    try {
+      await fetch("http://localhost:5000/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+      localStorage.removeItem("user"); // Hapus data user di localStorage
+      navigate("/login"); // Arahkan ke halaman login
+    } catch (err) {
+      console.error("Error saat logout:", err);
+      setError("Gagal logout. Silakan coba lagi.");
+    }
+  };
+
+  if (!user) return null; // Tampilkan kosong jika user belum ada
+
   return (
-    <div className="container">
-      <h1>Dashboard</h1>
-
-      {/* Menampilkan tombol "Create Class" hanya untuk Admin */}
-      {userRole === "admin" && (
-        <div style={{ marginBottom: "20px" }}>
-          <button onClick={handleAddClass} className="btn btn-primary">
-            Create Class
-          </button>
-        </div>
-      )}
-
-      <div>
-        <h2>Classes</h2>
-        {classes.length === 0 ? (
-          <p>No classes available</p>
-        ) : (
-          <div className="row">
-            {classes.map((cls) => (
-              <div className="col-md-4 mb-4" key={cls.class_id}>
-                <div className="card">
-                  <img
-                    src="https://via.placeholder.com/150"
-                    className="card-img-top"
-                    alt={cls.class_name}
-                  />
-                  <div className="card-body">
-                    <h5 className="card-title">{cls.class_name}</h5>
-                    <p className="card-text">{cls.description}</p>
-                    <button
-                      onClick={() => navigate(`/classPage/${cls.class_id}`)} // Mengarahkan ke halaman detail kelas
-                      className="btn btn-primary"
-                    >
-                      View Details
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+    <div className="p-8">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-2xl font-bold">
+          Selamat Datang, {user.username} ({user.role})
+        </h1>
+        <button
+          onClick={handleLogout}
+          className="bg-red-500 text-white py-2 px-4 rounded"
+        >
+          Logout
+        </button>
       </div>
+
+      {loading && <p>Memuat data kelas...</p>}
+      {error && <p className="text-red-500">{error}</p>}
+
+      {!loading && (
+        <>
+          {/* Fitur Admin: Buat Kelas */}
+          {user.role === "admin" && (
+            <div>
+              <button
+                onClick={() => navigate("/create-class")}
+                className="bg-blue-500 text-white py-2 px-4 rounded mb-4"
+              >
+                Buat Kelas
+              </button>
+            </div>
+          )}
+
+          {/* Fitur Dosen/Mahasiswa: Tampilkan Kelas */}
+          <h2 className="text-xl font-bold mb-4">
+            {user.role === "admin" ? "Semua Kelas" : "Kelas yang Anda Ikuti"}
+          </h2>
+          {classes.length === 0 ? (
+            <p>Tidak ada kelas yang tersedia.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {classes.map((classItem) => (
+                <div
+                  key={classItem.class_id}
+                  className="bg-white shadow-lg rounded-lg p-4"
+                >
+                  <h3 className="text-lg font-bold">{classItem.class_name}</h3>
+                  <p>{classItem.description}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 };
 
-export default Dashboard;
+export default DashboardPage;
