@@ -1,18 +1,9 @@
 const express = require("express");
-const router = express.Router();
-const db = require("../db");
 const multer = require("multer");
 const path = require("path");
+const db = require("../db");
 
-// Middleware untuk role authorization
-const authorizeRoles = (roles) => (req, res, next) => {
-  const userRole = req.session.user?.role; // Role dari session
-  if (roles.includes(userRole)) {
-    next();
-  } else {
-    res.status(403).json({ message: "Anda tidak memiliki akses ke fitur ini." });
-  }
-};
+const router = express.Router();
 
 // Konfigurasi Multer untuk upload file
 const storage = multer.diskStorage({
@@ -24,44 +15,78 @@ const storage = multer.diskStorage({
     cb(null, `${uniqueSuffix}-${file.originalname}`);
   },
 });
-const upload = multer({ storage });
 
-// Endpoint untuk mengambil semua konten
+const upload = multer({
+  storage,
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ["image/jpeg", "image/png", "application/pdf"];
+    if (!allowedTypes.includes(file.mimetype)) {
+      return cb(new Error("Invalid file type. Only JPEG, PNG, and PDF are allowed."));
+    }
+    cb(null, true);
+  },
+});
+
+// Rute: Mendapatkan semua konten
 router.get("/", (req, res) => {
+  const username = req.headers["username"];
+  const role = req.headers["role"];
+
+  // Cek autentikasi
+  if (!username || !role) {
+    return res.status(401).json({ error: "Unauthorized: Missing username or role in headers" });
+  }
+
   const sql = "SELECT * FROM content";
   db.query(sql, (err, results) => {
-    if (err) {
-      console.error("Error fetching contents:", err.message);
-      return res.status(500).json({ message: "Internal server error" });
-    }
+    if (err) return res.status(500).json({ error: err.message });
     res.json(results);
   });
 });
 
-// Endpoint untuk menambahkan konten baru (hanya admin dan dosen)
-router.post("/", authorizeRoles(["admin", "dosen"]), upload.single("file"), (req, res) => {
-  const { class_id, content_title, content_description, category, created_by } = req.body;
-  const filePath = req.file ? path.join("uploads", req.file.filename) : null;
+router.post("/", upload.single("file"), (req, res) => {
+  const username = req.headers["username"];
+  const role = req.headers["role"];
 
-  if (!class_id || !content_title || !category || !created_by) {
-    return res.status(400).json({ message: "Data tidak lengkap." });
+  // Validasi autentikasi
+  if (!username || !role) {
+    return res.status(401).json({ error: "Unauthorized: Missing username or role in headers" });
   }
 
+  // Validasi input
+  const { class_id, content_title, content_description, content_type } = req.body;
+  if (!class_id || !content_title || !content_description || !content_type) {
+    return res.status(400).json({ error: "Missing required fields" });
+  }
+
+  const created_by = username; // Gunakan username dari header
+  const filePath = req.file ? path.join("uploads", req.file.filename) : null;
+
   const sql = `
-    INSERT INTO content (class_id, content_title, content_description, content_url, category, created_by)
+    INSERT INTO content (class_id, content_title, content_description, content_url, created_by, content_type)
     VALUES (?, ?, ?, ?, ?, ?)
   `;
-  db.query(sql, [class_id, content_title, content_description, filePath, category, created_by], (err, result) => {
-    if (err) {
-      console.error("Error adding content:", err.message);
-      return res.status(500).json({ message: "Internal server error" });
-    }
-    res.status(201).json({ message: "Konten berhasil ditambahkan.", content_id: result.insertId });
+  db.query(sql, [class_id, content_title, content_description, filePath, created_by, content_type], (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.status(201).json({ message: "Content added successfully", content_id: result.insertId });
   });
 });
 
-// Endpoint untuk menghapus konten (hanya admin dan dosen)
-router.delete("/:content_id", authorizeRoles(["admin", "dosen"]), (req, res) => {
+// Rute: Menghapus konten (hanya admin dan dosen)
+router.delete("/:content_id", (req, res) => {
+  const username = req.headers["username"];
+  const role = req.headers["role"];
+
+  // Cek autentikasi
+  if (!username || !role) {
+    return res.status(401).json({ error: "Unauthorized: Missing username or role in headers" });
+  }
+
+  // Cek otorisasi
+  if (!["admin", "dosen"].includes(role)) {
+    return res.status(403).json({ message: "Forbidden: You do not have access to this resource." });
+  }
+
   const { content_id } = req.params;
 
   const sql = "DELETE FROM content WHERE content_id = ?";
@@ -71,9 +96,9 @@ router.delete("/:content_id", authorizeRoles(["admin", "dosen"]), (req, res) => 
       return res.status(500).json({ message: "Internal server error" });
     }
     if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "Konten tidak ditemukan." });
+      return res.status(404).json({ message: "Content not found." });
     }
-    res.json({ message: "Konten berhasil dihapus." });
+    res.json({ message: "Content successfully deleted." });
   });
 });
 
