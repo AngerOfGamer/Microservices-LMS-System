@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import ContentPage from "./ContentsPage";
 import AttendancePage from "./AttendancePage";
 
-const ClassPage = () => {
+const ClassPage = ({ role }) => {
   const { class_id } = useParams(); // Ambil class_id dari URL
   const [classDetails, setClassDetails] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -54,8 +54,18 @@ const ClassPage = () => {
 
           {/* Tabs Navigation */}
           <div>
-            <button onClick={() => setActiveTab("contents")}>Contents</button>
-            <button onClick={() => setActiveTab("attendance")}>Attendance</button>
+            <button
+              className={activeTab === "contents" ? "active-tab" : ""}
+              onClick={() => setActiveTab("contents")}
+            >
+              Contents
+            </button>
+            <button
+              className={activeTab === "attendance" ? "active-tab" : ""}
+              onClick={() => setActiveTab("attendance")}
+            >
+              Attendance
+            </button>
           </div>
 
           {/* Render Tab Content */}

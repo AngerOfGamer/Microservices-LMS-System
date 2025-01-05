@@ -9,6 +9,11 @@ const ContentPage = ({ role, classId }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (!classId) {
+      console.error("classId tidak diberikan!");
+      return;
+    }
+
     const fetchContents = async () => {
       try {
         const res = await axios.get(`/api/content?class_id=${classId}`, { withCredentials: true });
@@ -20,7 +25,19 @@ const ContentPage = ({ role, classId }) => {
     fetchContents();
   }, [classId]);
 
+  useEffect(() => {
+    setNewContent((prevContent) => ({
+      ...prevContent,
+      class_id: classId || "",
+    }));
+  }, [classId]);
+
   const saveContent = async () => {
+    if (!newContent.class_id || !newContent.content_title || !newContent.content_description) {
+      alert("Semua field harus diisi!");
+      return;
+    }
+
     try {
       await axios.post("/api/content", newContent, { withCredentials: true });
       alert("Konten berhasil disimpan!");
@@ -45,8 +62,8 @@ const ContentPage = ({ role, classId }) => {
       const updatedContents = await axios.get(`/api/content?class_id=${classId}`, { withCredentials: true });
       setContents(updatedContents.data);
     } catch (err) {
-      console.error("Error deleting content:", err);
-      alert("Gagal menghapus konten.");
+      console.error("Error deleting content:", err.response?.data?.message || err.message);
+      alert("Gagal menghapus konten: " + (err.response?.data?.message || "Internal server error."));
     }
   };
 
@@ -87,24 +104,21 @@ const ContentPage = ({ role, classId }) => {
               <td>{content.content_description}</td>
               <td>{content.category}</td>
               <td>
-                {role === "mahasiswa" && content.category === "tugas" ? (
+                {role === "mahasiswa" && content.category === "tugas" && (
                   <button
                     className="btn btn-primary"
-                    onClick={() => navigate("/submission")}
+                    onClick={() => navigate(`/submission?contentId=${content.content_id}`)}
                   >
                     Submission
                   </button>
-                ) : (
-                  role !== "mahasiswa" && (
-                    <>
-                      <button
-                        className="btn btn-danger"
-                        onClick={() => deleteContent(content.content_id)}
-                      >
-                        Delete
-                      </button>
-                    </>
-                  )
+                )}
+                {role !== "mahasiswa" && (
+                  <button
+                    className="btn btn-danger"
+                    onClick={() => deleteContent(content.content_id)}
+                  >
+                    Delete
+                  </button>
                 )}
               </td>
             </tr>
