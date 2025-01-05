@@ -58,10 +58,10 @@ const Dashboard = () => {
                     <h5 className="card-title">{cls.class_name}</h5>
                     <p className="card-text">{cls.description}</p>
                     <button
-                      onClick={() => navigate(`/classPage/${cls.class_id}`)} // Mengarahkan ke halaman detail kelas
+                      onClick={() => navigate(`/class/${cls.class_id}`)} // Mengarahkan ke halaman detail kelas
                       className="btn btn-primary"
                     >
-                      View Details
+                      Lihat Kelas
                     </button>
                   </div>
                 </div>
