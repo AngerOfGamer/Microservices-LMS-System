@@ -73,4 +73,42 @@ router.post("/", (req, res) => {
   });
 });
 
+router.get("/:class_id", (req, res) => {
+  const { class_id } = req.params;
+
+  console.log("Menerima permintaan untuk class_id:", class_id);
+
+  const sqlClass = `
+    SELECT * FROM classes WHERE class_id = ?;
+  `;
+  const sqlMembers = `
+    SELECT u.user_id, u.username, cm.role
+    FROM class_members cm
+    JOIN users u ON cm.user_id = u.user_id
+    WHERE cm.class_id = ?;
+  `;
+
+  db.query(sqlClass, [class_id], (err, classResults) => {
+    if (err || classResults.length === 0) {
+      console.error("Kesalahan query kelas:", err);
+      return res.status(404).json({ message: "Kelas tidak ditemukan" });
+    }
+
+    db.query(sqlMembers, [class_id], (err, memberResults) => {
+      if (err) {
+        console.error("Kesalahan query anggota kelas:", err);
+        return res.status(500).json({ message: "Kesalahan server saat memuat anggota kelas" });
+      }
+
+      res.json({
+        class: {
+          ...classResults[0],
+          members: memberResults,
+        },
+      });
+    });
+  });
+});
+
+
 module.exports = router;
