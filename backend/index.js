@@ -6,7 +6,7 @@ const cookieParser = require("cookie-parser");
 
 const absensiRoutes = require("./routes/absensi");
 const authRoutes = require("./routes/auth");
-const classRoutes = require("./routes/class");
+const classesRoutes = require("./routes/classes");
 const contentRoutes = require("./routes/content");
 const userRoutes = require("./routes/user");
 
@@ -37,7 +37,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Routes
 app.use("/api/absensi", absensiRoutes);
 app.use("/api/auth", authRoutes);
-app.use("/api/class", classRoutes);
+app.use("/api/classes", classesRoutes);
 app.use("/api/content", contentRoutes);
 app.use("/api/users", userRoutes);
 
@@ -45,4 +45,9 @@ app.use("/api/users", userRoutes);
 const PORT = config.port;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+});
+
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: "Internal Server Error" });
 });
