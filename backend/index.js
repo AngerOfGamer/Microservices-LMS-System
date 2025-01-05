@@ -1,6 +1,5 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const cors = require("cors");
 const config = require("./config");
 
 const absensiRoutes = require("./routes/absensi");
@@ -12,7 +11,13 @@ const userRoutes = require("./routes/user");
 const app = express();
 
 // Middleware
-app.use(cors());
+const cors = require("cors");
+app.use(
+  cors({
+    origin: "http://localhost:3000", // URL frontend Anda
+    credentials: true, // Izinkan pengiriman cookie
+  })
+);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
