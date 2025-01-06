@@ -133,7 +133,6 @@ const AddUserPage = () => {
           <table className="table table-bordered">
             <thead className="table-light">
               <tr>
-                <th>ID</th>
                 <th>Username</th>
                 <th>NIP/NIM</th>
                 <th>Role</th>
@@ -142,7 +141,6 @@ const AddUserPage = () => {
             <tbody>
               {users.map((user, index) => (
                 <tr key={index}>
-                  <td>{user.id}</td>
                   <td>{user.username}</td>
                   <td>{user.nip_nim}</td>
                   <td>{user.role}</td>
