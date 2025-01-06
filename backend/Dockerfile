@@ -1,20 +1,20 @@
-# Gunakan image Node.js versi terbaru
-FROM node:20-alpine
+# Gunakan base image Node.js
+FROM node:20-alpine AS build
 
-# Tentukan direktori kerja di container
+# Set working directory di container
 WORKDIR /app
 
-# Salin file package.json dan package-lock.json untuk instalasi dependensi
+# Salin file package.json dan package-lock.json ke dalam container
 COPY package*.json ./
 
-# Install dependensi
+# Install dependensi aplikasi
 RUN npm install
 
-# Salin seluruh file aplikasi ke dalam container
-COPY . .
+# Salin seluruh file backend (termasuk config.js) ke dalam container
+COPY ./backend /app
 
-# Expose port untuk backend
+# Expose port sesuai konfigurasi aplikasi
 EXPOSE 5000
 
-# Jalankan aplikasi Node.js
+# Tentukan command untuk menjalankan aplikasi
 CMD ["node", "index.js"]
