@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import "bootstrap/dist/css/bootstrap.min.css";
+import NavBar from "../components/NavBar";
 
 const CreateClass = () => {
   const [className, setClassName] = useState("");
@@ -80,67 +82,89 @@ const CreateClass = () => {
   };
 
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold mb-4">Buat Kelas Baru</h1>
-      {success && <p className="text-green-500 mb-4">{success}</p>}
-      {error && <p className="text-red-500 mb-4">{error}</p>}
+    <div>
+    <NavBar />
+    <div className="container mt-4">
+      <h1 className="mb-4 text-center">Buat Kelas Baru</h1>
+      {success && <div className="alert alert-success">{success}</div>}
+      {error && <div className="alert alert-danger">{error}</div>}
 
       <div className="mb-4">
+        <label htmlFor="className" className="form-label">
+          Nama Kelas
+        </label>
         <input
+          id="className"
           type="text"
           placeholder="Nama Kelas"
           value={className}
           onChange={(e) => setClassName(e.target.value)}
-          className="border p-2 w-full"
+          className="form-control"
         />
       </div>
       <div className="mb-4">
+        <label htmlFor="description" className="form-label">
+          Deskripsi Kelas
+        </label>
         <textarea
+          id="description"
           placeholder="Deskripsi Kelas"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="border p-2 w-full"
+          className="form-control"
         ></textarea>
       </div>
 
       <div className="mb-4">
-        <h2 className="text-lg font-bold mb-2">Pilih Dosen dan Mahasiswa</h2>
-        <div className="grid grid-cols-2 gap-4">
+        <h5 className="mb-3">Pilih Dosen dan Mahasiswa</h5>
+        <div className="row">
           {users.map((user) => (
-            <button
+            <div
               key={user.user_id}
-              onClick={() => handleSelectUser(user)}
-              className="border p-2 rounded"
+              className="col-md-6 mb-3"
             >
-              {user.username} ({user.role})
-            </button>
+              <button
+                onClick={() => handleSelectUser(user)}
+                className="btn btn-outline-primary w-100 text-start"
+              >
+                {user.username} ({user.role})
+              </button>
+            </div>
           ))}
         </div>
       </div>
 
       <div className="mb-4">
-        <h2 className="text-lg font-bold mb-2">Anggota Terpilih</h2>
-        {selectedUsers.map((user) => (
-          <div key={user.user_id} className="flex items-center justify-between">
-            <span>
-              {user.username} ({user.role})
-            </span>
-            <button
-              onClick={() => handleRemoveUser(user.user_id)}
-              className="text-red-500"
-            >
-              Hapus
-            </button>
-          </div>
-        ))}
+        <h5 className="mb-3">Anggota Terpilih</h5>
+        {selectedUsers.length === 0 ? (
+          <p className="text-muted">Belum ada anggota yang dipilih.</p>
+        ) : (
+          <ul className="list-group">
+            {selectedUsers.map((user) => (
+              <li
+                key={user.user_id}
+                className="list-group-item d-flex justify-content-between align-items-center"
+              >
+                {user.username} ({user.role})
+                <button
+                  onClick={() => handleRemoveUser(user.user_id)}
+                  className="btn btn-danger btn-sm"
+                >
+                  Hapus
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <button
         onClick={handleCreateClass}
-        className="bg-blue-500 text-white py-2 px-4 rounded"
+        className="btn btn-primary w-100"
       >
         Buat Kelas
       </button>
+    </div>
     </div>
   );
 };

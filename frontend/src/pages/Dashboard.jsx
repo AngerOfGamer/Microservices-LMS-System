@@ -1,27 +1,26 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import "bootstrap/dist/css/bootstrap.min.css";
+import NavBar from "../components/NavBar";
 
 const DashboardPage = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null); // Data user dari localStorage
-  const [classes, setClasses] = useState([]); // Data kelas
-  const [loading, setLoading] = useState(true); // Status loading
-  const [error, setError] = useState(""); // Pesan error
+  const [user, setUser] = useState(null);
+  const [classes, setClasses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
       const storedUser = localStorage.getItem("user");
       if (storedUser) {
         const userData = JSON.parse(storedUser);
-        setUser(userData); // Set user data ke state
+        setUser(userData);
 
         try {
           const response = await fetch(
             `http://localhost:5000/api/classes?user_id=${userData.user_id}`,
-            {
-              method: "GET",
-              credentials: "include",
-            }
+            { method: "GET", credentials: "include" }
           );
 
           if (response.ok) {
@@ -45,55 +44,72 @@ const DashboardPage = () => {
     fetchData();
   }, [navigate]);
 
-  if (!user) return null; // Tampilkan kosong jika user belum ada
+  if (!user) return null;
+  
+  const handleCardClick = (classId) => {
+    navigate(`/class/${classId}`);
+  };
 
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold">
-          Selamat Datang, {user.username} ({user.role})
-        </h1>
-      </div>
+    <div>
+      <NavBar />
+      <div className="container mt-4">
+        {loading && <p className="text-center">Memuat data kelas...</p>}
+        {error && <p className="text-danger text-center">{error}</p>}
 
-      {loading && <p>Memuat data kelas...</p>}
-      {error && <p className="text-red-500">{error}</p>}
-
-      {!loading && (
-        <>
-          {/* Fitur Admin: Buat Kelas */}
-          {user.role === "admin" && (
-            <div>
+        {!loading && (
+          <>
+            {user.role === "admin" && (
               <button
+                className="btn btn-primary mb-4"
                 onClick={() => navigate("/createClass")}
-                className="bg-blue-500 text-white py-2 px-4 rounded mb-4"
               >
                 Buat Kelas
               </button>
-            </div>
-          )}
+            )}
 
-          {/* Tampilkan Card Kelas */}
-          <h2 className="text-xl font-bold mb-4">
-            {user.role === "admin" ? "Semua Kelas" : "Kelas yang Anda Ikuti"}
-          </h2>
-          {classes.length === 0 ? (
-            <p>Tidak ada kelas yang tersedia.</p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {classes.map((classItem) => (
-                <div
-                  key={classItem.class_id}
-                  className="bg-white shadow-lg rounded-lg p-4 cursor-pointer"
-                  onClick={() => navigate(`/class/${classItem.class_id}`)} // Navigasi ke halaman ClassPage
-                >
-                  <h3 className="text-lg font-bold">{classItem.class_name}</h3>
-                  <p>{classItem.description}</p>
-                </div>
-              ))}
+            <div className="row">
+              {classes.length === 0 ? (
+                <p className="text-center">Tidak ada kelas yang tersedia.</p>
+              ) : (
+                classes.map((classItem) => (
+                  <div
+                    key={classItem.class_id}
+                    className="col-md-4 mb-4"
+                  >
+                    <div
+                      className="card shadow-sm h-100"
+                      onClick={() => handleCardClick(classItem.class_id)}
+                      style={{
+                        borderRadius: "10px",
+                        overflow: "hidden",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <div
+                        className="card-img-top"
+                        style={{
+                          height: "150px",
+                          background: `url('https://via.placeholder.com/300x150') no-repeat center center`,
+                          backgroundSize: "cover",
+                        }}
+                      ></div>
+                      <div className="card-body">
+                        <h5 className="card-title fw-bold">
+                          {classItem.class_name}
+                        </h5>
+                        <p className="card-text text-muted">
+                          {classItem.description}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
-          )}
-        </>
-      )}
+          </>
+        )}
+      </div>
     </div>
   );
 };
