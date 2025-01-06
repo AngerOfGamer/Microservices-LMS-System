@@ -14,7 +14,7 @@ RUN npm install
 COPY . .
 
 # Expose port untuk backend
-EXPOSE 3000
+EXPOSE 5000
 
 # Jalankan aplikasi Node.js
-CMD ["node", "db.js"]
+CMD ["node", "index.js"]
