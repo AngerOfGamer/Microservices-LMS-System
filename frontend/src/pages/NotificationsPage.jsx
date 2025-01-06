@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import NavBar from "../components/NavBar";
+
 
 const Notification = () => {
   const [title, setTitle] = useState("");
@@ -133,6 +135,8 @@ const Notification = () => {
   }
 
   return (
+    <div>
+    <NavBar />
     <div className="container mt-4">
       <h2 className="mb-4">Buat Notifikasi</h2>
       <form onSubmit={handleSubmit}>
@@ -196,6 +200,7 @@ const Notification = () => {
           {isSubmitting ? "Mengirim..." : "Buat Notifikasi"}
         </button>
       </form>
+    </div>
     </div>
   );
 };
