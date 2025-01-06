@@ -1,25 +1,33 @@
 const express = require("express");
-const db = require("../db");
-
+const db = require("../db"); 
 const router = express.Router();
 
-router.get("/", (req, res) => {
+// Middleware untuk memeriksa apakah pengguna sudah login
+const checkAuth = (req, res, next) => {
   if (!req.session.user) {
     return res.status(401).json({ message: "Anda belum login." });
   }
+  next();
+};
 
-  const { role, user_id } = req.session.user;
-
-  if (role !== "mahasiswa") {
-    return res.status(403).json({ message: "Hanya mahasiswa yang dapat melihat notifikasi ini." });
+// Middleware untuk validasi role pengguna
+const checkRole = (allowedRoles) => (req, res, next) => {
+  const { role } = req.session.user;
+  if (!allowedRoles.includes(role)) {
+    return res.status(403).json({ message: "Akses ditolak." });
   }
+  next();
+};
 
-  // Query notifikasi berdasarkan kelas mahasiswa
+// Endpoint untuk mendapatkan notifikasi (hanya untuk mahasiswa)
+router.get("/", checkAuth, checkRole(["mahasiswa"]), (req, res) => {
+  const { user_id } = req.session.user;
+
   const sqlGetNotifications = `
     SELECT n.*
     FROM notifications n
-    JOIN class_members cm ON cm.class_id = n.class_id
-    WHERE cm.user_id = ? AND cm.role = 'mahasiswa'
+    LEFT JOIN class_members cm ON cm.class_id = n.class_id
+    WHERE (n.class_id IS NULL OR cm.user_id = ?) AND n.role = 'mahasiswa'
     ORDER BY n.created_at DESC`;
 
   db.query(sqlGetNotifications, [user_id], (err, results) => {
@@ -32,34 +40,32 @@ router.get("/", (req, res) => {
   });
 });
 
-
 // Endpoint untuk membuat notifikasi baru
-router.post("/", (req, res) => {
-  if (!req.session.user) {
-    return res.status(401).json({ message: "Anda belum login." });
-  }
-
+router.post("/", checkAuth, (req, res) => {
   const { role, user_id } = req.session.user;
   const { title, content, category, class_id } = req.body;
 
   // Validasi input
-  if (!title || !content || !category || (role === "dosen" && !class_id)) {
-    return res.status(400).json({ message: "Judul, konten, kategori, dan ID kelas wajib diisi." });
+  if (!title || !content || !category) {
+    return res.status(400).json({ message: "Judul, konten, dan kategori wajib diisi." });
   }
 
   // Validasi berdasarkan role
-  if (role === "admin" && category !== "libur") {
-    return res.status(403).json({ message: "Admin hanya dapat membuat notifikasi kategori libur." });
+  if (role === "admin") {
+    if (category !== "libur") {
+      return res.status(403).json({ message: "Admin hanya dapat membuat notifikasi kategori libur." });
+    }
+    return createNotification(null); // Admin tidak memerlukan class_id
   }
 
-  if (role === "dosen" && ["materi", "tugas", "penilaian"].indexOf(category) === -1) {
-    return res.status(403).json({
-      message: "Dosen hanya dapat membuat notifikasi kategori materi, tugas, atau penilaian untuk kelas tertentu.",
-    });
-  }
-
-  // Jika role adalah dosen, validasi kelas
   if (role === "dosen") {
+    if (!class_id || !["materi", "tugas", "penilaian"].includes(category)) {
+      return res.status(400).json({
+        message: "Dosen hanya dapat membuat notifikasi kategori materi, tugas, atau penilaian untuk kelas tertentu.",
+      });
+    }
+
+    // Validasi apakah dosen mengajar di kelas yang dipilih
     const sqlCheckClass = `
       SELECT c.class_id
       FROM classes c
@@ -76,45 +82,19 @@ router.post("/", (req, res) => {
         return res.status(403).json({ message: "Anda tidak mengajar di kelas ini." });
       }
 
-      // Validasi berhasil, lanjutkan pembuatan notifikasi
-      createNotification();
+      return createNotification(class_id);
     });
-  } else {
-    // Admin langsung lanjutkan pembuatan notifikasi
-    createNotification();
   }
 
-  function createNotification() {
-    // Ambil mahasiswa di kelas (hanya untuk dosen)
-    if (role === "dosen") {
-      const sqlGetStudents = `
-        SELECT user_id
-        FROM class_members
-        WHERE class_id = ? AND role = 'mahasiswa'`;
-
-      db.query(sqlGetStudents, [class_id], (err, studentResults) => {
-        if (err) {
-          console.error("Kesalahan query mahasiswa:", err);
-          return res.status(500).json({ message: "Kesalahan server saat mengambil mahasiswa." });
-        }
-
-        const recipientIds = studentResults.map((student) => student.user_id);
-        saveNotification(recipientIds);
-      });
-    } else {
-      // Admin membuat notifikasi umum
-      saveNotification(null);
-    }
-  }
-
-  function saveNotification(recipientIds) {
+  function createNotification(classId) {
     const sqlInsertNotification = `
       INSERT INTO notifications (title, content, category, role, class_id, recipient_ids, created_by, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`;
 
+    const recipientIds = classId ? JSON.stringify([]) : null; // Admin tidak memiliki recipient
     db.query(
       sqlInsertNotification,
-      [title, content, category, "mahasiswa", class_id || null, JSON.stringify(recipientIds), user_id],
+      [title, content, category, "mahasiswa", classId, recipientIds, user_id],
       (err, result) => {
         if (err) {
           console.error("Kesalahan query pembuatan notifikasi:", err);

@@ -11,22 +11,27 @@ const Notification = () => {
   const [notifications, setNotifications] = useState([]); // Notifikasi untuk mahasiswa
   const [error, setError] = useState(""); // Error saat mengambil data
   const [loading, setLoading] = useState(true); // Status loading
+  const [isSubmitting, setIsSubmitting] = useState(false); // Status pengiriman data
 
+  // Ambil data user dari localStorage dan fetch data sesuai role
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Ambil role pengguna dari localStorage
         const storedUser = JSON.parse(localStorage.getItem("user"));
+        if (!storedUser || !storedUser.role) {
+          alert("Anda belum login. Silakan login terlebih dahulu.");
+          window.location.href = "/login"; // Redirect ke halaman login
+          return;
+        }
+
         setRole(storedUser.role);
 
         if (storedUser.role === "dosen") {
-          // Ambil kelas yang diajarkan dosen
           const response = await axios.get("http://localhost:5000/api/classes", {
             withCredentials: true,
           });
           setClasses(response.data.classes);
         } else if (storedUser.role === "mahasiswa") {
-          // Ambil notifikasi untuk mahasiswa
           const response = await axios.get("http://localhost:5000/api/notifications", {
             withCredentials: true,
           });
@@ -43,20 +48,34 @@ const Notification = () => {
     fetchData();
   }, []);
 
+  // Fungsi untuk membuat notifikasi baru
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+
+    // Validasi input
+    if (!title || !content || !category || (role === "dosen" && !classId)) {
+      alert("Semua field wajib diisi.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    const payload = {
+      title,
+      content,
+      category,
+      ...(role === "dosen" && { class_id: classId }),
+    };
+
+    console.log("Payload yang dikirim:", payload);
 
     try {
-      const payload = {
-        title,
-        content,
-        category,
-        class_id: role === "dosen" ? classId : null, // Dosen mengirim ke kelas tertentu
-      };
-
-      await axios.post("http://localhost:5000/api/notifications", payload, {
-        withCredentials: true,
-      });
+      const response = await axios.post(
+        "http://localhost:5000/api/notifications",
+        payload,
+        { withCredentials: true }
+      );
 
       alert("Notifikasi berhasil dibuat!");
       setTitle("");
@@ -65,7 +84,9 @@ const Notification = () => {
       setClassId("");
     } catch (err) {
       console.error("Gagal membuat notifikasi:", err.response?.data || err.message);
-      alert("Gagal membuat notifikasi.");
+      alert("Gagal membuat notifikasi. " + (err.response?.data?.message || ""));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -79,11 +100,10 @@ const Notification = () => {
   }
 
   if (role === "mahasiswa") {
-    // Tampilan khusus untuk mahasiswa melihat notifikasi
     return (
       <div className="container mt-4">
         <h2 className="mb-4">Notifikasi</h2>
-        {error && <p className="text-danger">{error}</p>}
+        {error && <div className="alert alert-danger">{error}</div>}
         {notifications.length > 0 ? (
           <ul className="list-group">
             {notifications.map((notif) => (
@@ -104,7 +124,6 @@ const Notification = () => {
   }
 
   if (role === "dosen" && classes.length === 0) {
-    // Tampilan jika dosen tidak memiliki kelas
     return (
       <div className="container mt-4">
         <h2 className="mb-4">Tidak Ada Kelas</h2>
@@ -113,7 +132,6 @@ const Notification = () => {
     );
   }
 
-  // Tampilan untuk dosen atau admin membuat notifikasi
   return (
     <div className="container mt-4">
       <h2 className="mb-4">Buat Notifikasi</h2>
@@ -163,17 +181,19 @@ const Notification = () => {
             onChange={(e) => setCategory(e.target.value)}
             required
           >
+            <option value="">Pilih Kategori</option>
             {role === "admin" && <option value="libur">Libur</option>}
             {role === "dosen" && (
               <>
                 <option value="materi">Materi</option>
                 <option value="tugas">Tugas</option>
+                <option value="penilaian">Penilaian</option>
               </>
             )}
           </select>
         </div>
-        <button type="submit" className="btn btn-primary">
-          Buat Notifikasi
+        <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+          {isSubmitting ? "Mengirim..." : "Buat Notifikasi"}
         </button>
       </form>
     </div>
