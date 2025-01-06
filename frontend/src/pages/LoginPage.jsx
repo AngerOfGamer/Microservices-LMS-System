@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import "bootstrap/dist/css/bootstrap.min.css";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -39,27 +40,39 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="flex justify-center items-center h-screen bg-gray-100">
-      <div className="bg-white p-8 shadow-lg rounded-lg">
-        <h1 className="text-2xl font-bold mb-4">Login</h1>
-        {error && <p className="text-red-500 mb-4">{error}</p>}
-        <input
-          type="text"
-          placeholder="Username"
-          className="border p-2 w-full mb-4"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
-        <input
-          type="text"
-          placeholder="NIP/NIM"
-          className="border p-2 w-full mb-4"
-          value={nip_nim}
-          onChange={(e) => setNipNim(e.target.value)}
-        />
+    <div className="container d-flex justify-content-center align-items-center vh-100 bg-light">
+      <div className="card shadow-sm p-4" style={{ width: "100%", maxWidth: "400px" }}>
+        <h1 className="text-center mb-4">Login</h1>
+        {error && <div className="alert alert-danger">{error}</div>}
+        <div className="mb-3">
+          <label htmlFor="username" className="form-label">
+            Username
+          </label>
+          <input
+            id="username"
+            type="text"
+            placeholder="Masukkan Username"
+            className="form-control"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
+        </div>
+        <div className="mb-3">
+          <label htmlFor="nipNim" className="form-label">
+            NIP/NIM
+          </label>
+          <input
+            id="nipNim"
+            type="text"
+            placeholder="Masukkan NIP/NIM"
+            className="form-control"
+            value={nip_nim}
+            onChange={(e) => setNipNim(e.target.value)}
+          />
+        </div>
         <button
           onClick={handleLogin}
-          className="bg-blue-500 text-white py-2 px-4 rounded w-full"
+          className="btn btn-primary w-100"
         >
           Login
         </button>
