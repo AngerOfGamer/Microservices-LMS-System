@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import NavBar from "../components/NavBar";
 
 const AddUserPage = () => {
   const [formData, setFormData] = useState({
@@ -64,6 +65,8 @@ const AddUserPage = () => {
   };
 
   return (
+    <div>
+      <NavBar/>
     <div className="container mt-4">
       <h2 className="mb-4">Kelola Pengguna</h2>
 
@@ -158,6 +161,7 @@ const AddUserPage = () => {
           </table>
         </div>
       </div>
+    </div>
     </div>
   );
 };
