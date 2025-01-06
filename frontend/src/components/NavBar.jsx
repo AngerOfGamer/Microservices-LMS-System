@@ -54,7 +54,7 @@ const NavBar = () => {
               aria-expanded="false"
             >
               <img
-                src="https://via.placeholder.com/40"
+                src="/images/img2.jpeg"
                 alt="Profile"
                 className="rounded-circle me-2"
                 style={{ width: "30px", height: "30px" }}
