@@ -1,102 +1,203 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
-const AttendancePage = ({ role }) => {
+const AttendancePage = ({ classId }) => {
   const [date, setDate] = useState("");
   const [students, setStudents] = useState([]);
-  const [attendanceRecords, setAttendanceRecords] = useState([]);
   const [attendance, setAttendance] = useState([]);
+  const [attendanceRecap, setAttendanceRecap] = useState([]);
+  const [role, setRole] = useState("");
 
+  // Fetch role pengguna dari localStorage
   useEffect(() => {
-    // Fetch students and attendance records
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    if (storedUser) {
+      setRole(storedUser.role);
+    }
+  }, []);
+
+  // Fetch data mahasiswa atau rekap absensi
+  useEffect(() => {
     const fetchData = async () => {
+      const storedUser = JSON.parse(localStorage.getItem("user"));
+      const { username, role } = storedUser || {};
+
+      if (!username || !role) {
+        alert("User tidak valid. Silakan login kembali.");
+        return;
+      }
+
       try {
-        const studentsRes = await axios.get("/api/users/students", { withCredentials: true });
-        setStudents(studentsRes.data);
+        if (role === "mahasiswa") {
+          // Fetch rekap absensi mahasiswa
+          const resRecap = await axios.get(
+            "http://localhost:5000/api/attendance/records",
+            {
+              params: { class_id: classId },
+              headers: { username, role },
+              withCredentials: true,
+            }
+          );
+          setAttendanceRecap(resRecap.data);
+        } else {
+          // Fetch daftar mahasiswa dan rekap absensi
+          const resStudents = await axios.get(
+            "http://localhost:5000/api/attendance/students",
+            {
+              params: { class_id: classId },
+              headers: { username, role },
+              withCredentials: true,
+            }
+          );
+          setStudents(resStudents.data);
 
-        const recordsRes =
-          role === "mahasiswa"
-            ? await axios.get("/api/attendance/records/student", { withCredentials: true })
-            : await axios.get("/api/attendance/records", { withCredentials: true });
-
-        setAttendanceRecords(recordsRes.data);
+          const resRecap = await axios.get(
+            "http://localhost:5000/api/attendance/recap",
+            {
+              params: { class_id: classId },
+              headers: { username, role },
+              withCredentials: true,
+            }
+          );
+          setAttendanceRecap(resRecap.data);
+        }
       } catch (err) {
-        console.error("Error fetching data:", err);
+        console.error("Error fetching data:", err.response?.data || err.message);
       }
     };
-    fetchData();
-  }, [role]);
 
-  const saveAttendance = async () => {
+    fetchData();
+  }, [classId]);
+
+  // Simpan data absensi
+  const saveAttendance = async (e) => {
+    e.preventDefault();
+
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    const { username, role } = storedUser || {};
+
+    if (!username || !role) {
+      alert("User tidak valid. Silakan login kembali.");
+      return;
+    }
+
+    if (!date) {
+      alert("Pastikan tanggal dipilih.");
+      return;
+    }
+
     try {
       await axios.post(
-        "/api/attendance/create",
-        { date, attendance },
-        { withCredentials: true }
+        "http://localhost:5000/api/attendance",
+        { date, class_id: classId, attendance },
+        {
+          headers: { username, role },
+          withCredentials: true,
+        }
       );
+
       alert("Absensi berhasil disimpan!");
+
+      // Muat ulang rekap absensi setelah menyimpan
+      const resRecap = await axios.get(
+        "http://localhost:5000/api/attendance/recap",
+        {
+          params: { class_id: classId },
+          headers: { username, role },
+          withCredentials: true,
+        }
+      );
+      setAttendanceRecap(resRecap.data);
     } catch (err) {
-      console.error("Error saving attendance:", err);
+      console.error("Error saving attendance:", err.response?.data || err.message);
       alert("Gagal menyimpan absensi.");
     }
   };
 
-  const togglePresence = (id) => {
-    setAttendance((prev) =>
-      prev.some((a) => a.studentId === id)
-        ? prev.map((a) =>
-            a.studentId === id ? { ...a, status: a.status === "present" ? "absent" : "present" } : a
-          )
-        : [...prev, { studentId: id, status: "present" }]
-    );
+  // Atur status kehadiran mahasiswa
+  const toggleAttendance = (studentId) => {
+    setAttendance((prev) => {
+      const existing = prev.find((record) => record.studentId === studentId);
+      if (existing) {
+        return prev.filter((record) => record.studentId !== studentId);
+      }
+      return [...prev, { studentId, status: "hadir" }];
+    });
   };
 
   return (
-    <div className="container mt-5">
-      <h1 className="text-center">Attendance Management</h1>
+    <div className="container mt-4">
+      <h2 className="mb-4">Attendance Management</h2>
+
+      {/* Form Absensi untuk Admin/Dosen */}
       {role !== "mahasiswa" && (
-        <div className="mb-4">
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="form-control mb-2"
-          />
-          <ul>
-            {students.map((student) => (
-              <li key={student.id}>
-                {student.name}
+        <div className="card shadow-sm mb-4">
+          <div className="card-body">
+            <h5 className="card-title">Mark Attendance</h5>
+            <form onSubmit={saveAttendance}>
+              <div className="mb-3">
+                <label htmlFor="date" className="form-label">
+                  Date
+                </label>
                 <input
-                  type="checkbox"
-                  onChange={() => togglePresence(student.id)}
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="form-control"
+                  required
                 />
-              </li>
-            ))}
-          </ul>
-          <button onClick={saveAttendance} className="btn btn-primary">
-            Save Attendance
-          </button>
+              </div>
+              <div className="mb-3">
+                <ul className="list-group">
+                  {students.map((student) => (
+                    <li
+                      key={student.user_id}
+                      className="list-group-item d-flex justify-content-between align-items-center"
+                    >
+                      {student.name}
+                      <input
+                        type="checkbox"
+                        onChange={() => toggleAttendance(student.user_id)}
+                        checked={attendance.some(
+                          (record) => record.studentId === student.user_id
+                        )}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <button type="submit" className="btn btn-primary">
+                Save Attendance
+              </button>
+            </form>
+          </div>
         </div>
       )}
-      <h3>Attendance Records</h3>
-      <table className="table">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Student Name</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {attendanceRecords.map((record, index) => (
-            <tr key={index}>
-              <td>{record.date}</td>
-              <td>{record.studentName}</td>
-              <td>{record.status}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+
+      {/* Rekap Absensi */}
+      <h3 className="mb-4">Attendance Recap</h3>
+      <div className="card shadow-sm">
+        <div className="card-body">
+          <table className="table table-bordered">
+            <thead className="table-light">
+              <tr>
+                <th>Date</th>
+                {role !== "mahasiswa" && <th>Student Name</th>}
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {attendanceRecap.map((record, index) => (
+                <tr key={index}>
+                  <td>{new Date(record.date).toLocaleDateString("en-GB")}</td>
+                  {role !== "mahasiswa" && <td>{record.student_name}</td>}
+                  <td>{record.status}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 };

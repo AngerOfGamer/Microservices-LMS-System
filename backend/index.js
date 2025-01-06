@@ -3,15 +3,16 @@ const bodyParser = require("body-parser");
 const config = require("./config");
 const session = require("express-session");
 const cookieParser = require("cookie-parser");
+const path = require("path");
 
-const absensiRoutes = require("./routes/absensi");
+
+const attendanceRoutes = require("./routes/attendance");
 const authRoutes = require("./routes/auth");
 const classesRoutes = require("./routes/classes");
 const contentRoutes = require("./routes/content");
 const userRoutes = require("./routes/user");
 const notificationsRoutes = require("./routes/notifications");
-const nilaiRoutes = require("./routes/nilai");
-const submissionRoutes = require("./routes/submissions");
+const submissionsRoutes = require("./routes/submissions")
 
 const app = express();
 
@@ -38,13 +39,14 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Routes
-app.use("/api/absensi", absensiRoutes);
+app.use("/api/attendance", attendanceRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/classes", classesRoutes);
 app.use("/api/content", contentRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/notifications", notificationsRoutes);
-app.use("/api/nilai",nilaiRoutes)
+app.use("/api/submissions", submissionsRoutes);
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Server
 const PORT = config.port;

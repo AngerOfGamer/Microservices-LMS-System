@@ -20,7 +20,7 @@ const App = () => {
         <Route path="/submission" element={<SubmissionPage />} />
         <Route path="/notifications" element={<NotificationPage />} />
         <Route path="createClass" element={<CreateClass />} />
-        <Route path="*" element={<Navigate to="/dashboard" />} />
+        <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     </Router>
   );
