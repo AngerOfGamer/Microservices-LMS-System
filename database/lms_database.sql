@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 06, 2025 at 10:25 AM
+-- Generation Time: Jan 06, 2025 at 02:39 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -145,7 +145,13 @@ INSERT INTO `content` (`content_id`, `class_id`, `content_title`, `content_descr
 (3, 1, 'Modul 3', 'tiga', '/uploads/1736086150697-#Paddy.jpg', 'tugas', 2, '2025-01-05 14:09:10'),
 (4, 1, 'modul 4', 'empat', '/uploads/1736086411235-36-Article Text-121-1-10-20190408.pdf', 'materi', 2, '2025-01-05 14:13:31'),
 (5, 1, 'modul 5', '', '/uploads/1736095879057-lms_database (1).sql', 'tugas', 2, '2025-01-05 16:51:19'),
-(6, 4, 'modul 1', 'satu', NULL, 'materi', 2, '2025-01-06 07:48:17');
+(6, 4, 'modul 1', 'satu', NULL, 'materi', 2, '2025-01-06 07:48:17'),
+(7, 2, 'a', 'a', '/uploads/1736163203700-127_0_0_1.sql', 'tugas', 2, '2025-01-06 11:33:23'),
+(8, 2, 'modul 1', '1', '/uploads/1736163591007-9.+Desmawan+et+al (1).pdf', 'tugas', 2, '2025-01-06 11:39:51'),
+(9, 1, 'tugas3', '3', '/uploads/1736164193352-254-437-1-PB.pdf', 'tugas', 3, '2025-01-06 11:49:53'),
+(10, 2, 'tugas2', 'a', '/uploads/1736164631621-925-2726-1-PB.pdf', 'tugas', 3, '2025-01-06 11:57:11'),
+(11, 2, 'modul 2', 'dua', '/uploads/1736165703637-157-Article Text-63-1-10-20230830.pdf', 'tugas', 3, '2025-01-06 12:15:03'),
+(12, 2, 'modul 2', '', '/uploads/1736166100170-615-Article Text-2491-1-10-20241225.pdf', 'materi', 3, '2025-01-06 12:21:40');
 
 -- --------------------------------------------------------
 
@@ -165,7 +171,9 @@ CREATE TABLE `nilai` (
 --
 
 INSERT INTO `nilai` (`nilai_id`, `submission_id`, `grade`, `created_at`) VALUES
-(1, 3, 80.00, '2025-01-05 16:11:12');
+(1, 3, 80.00, '2025-01-05 16:11:12'),
+(2, 17, 0.00, '2025-01-06 11:45:32'),
+(3, 17, 100.00, '2025-01-06 11:45:41');
 
 -- --------------------------------------------------------
 
@@ -184,6 +192,15 @@ CREATE TABLE `notifications` (
   `created_by` int(11) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `notifications`
+--
+
+INSERT INTO `notifications` (`notification_id`, `title`, `content`, `category`, `role`, `class_id`, `recipient_ids`, `created_by`, `created_at`) VALUES
+(7, 'libur', 'berlibur', 'libur', 'mahasiswa', NULL, NULL, 2, '2025-01-06 11:46:16'),
+(8, 'New Content: modul 2', 'A new content titled \"modul 2\" has been added.', '', 'mahasiswa', 2, '[1,4,20,21]', 3, '2025-01-06 12:15:03'),
+(9, 'New Content: modul 2', 'A new content titled \"modul 2\" has been added.', '', 'mahasiswa', 2, '[1,4,20,21]', 3, '2025-01-06 12:21:40');
 
 -- --------------------------------------------------------
 
@@ -216,7 +233,10 @@ INSERT INTO `submissions` (`submission_id`, `task_title`, `class_id`, `user_id`,
 (11, 'tugas 1', 1, 1, '2025-01-06 07:38:26', '/uploads/1736149106391-9.+Desmawan+et+al (1).pdf'),
 (12, 'tugas 1', 1, 1, '2025-01-06 09:02:14', '/uploads/1736154134525-9.+Desmawan+et+al (1).pdf'),
 (13, 'tugas 1', 1, 1, '2025-01-06 09:23:25', '/uploads/1736155405889-9.+Desmawan+et+al (1).pdf'),
-(14, 'tugas 1', 1, 1, '2025-01-06 09:24:21', '/uploads/1736155461377-9.+Desmawan+et+al (1).pdf');
+(14, 'tugas 1', 1, 1, '2025-01-06 09:24:21', '/uploads/1736155461377-9.+Desmawan+et+al (1).pdf'),
+(15, 'tugas 1', 1, 1, '2025-01-06 10:52:52', '/uploads/1736160772951-9.+Desmawan+et+al (1).pdf'),
+(16, 'a', 2, 1, '2025-01-06 11:33:48', '/uploads/1736163228561-9.+Desmawan+et+al (1).pdf'),
+(17, 'tugas 1', 2, 1, '2025-01-06 11:40:19', '/uploads/1736163619866-925-2726-1-PB.pdf');
 
 -- --------------------------------------------------------
 
@@ -338,25 +358,25 @@ ALTER TABLE `class_members`
 -- AUTO_INCREMENT for table `content`
 --
 ALTER TABLE `content`
-  MODIFY `content_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `content_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `nilai`
 --
 ALTER TABLE `nilai`
-  MODIFY `nilai_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `nilai_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `notification_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `notification_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `submissions`
 --
 ALTER TABLE `submissions`
-  MODIFY `submission_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `submission_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT for table `users`
