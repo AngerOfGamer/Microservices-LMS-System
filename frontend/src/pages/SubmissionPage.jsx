@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
 import NavBar from "../components/NavBar";
@@ -6,23 +6,66 @@ import NavBar from "../components/NavBar";
 const SubmissionPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
-
-  // Ambil classId dari state atau localStorage
   const classId = location.state?.classId || localStorage.getItem("classId");
   const [taskTitle, setTaskTitle] = useState("");
   const [file, setFile] = useState(null);
+  const [submissions, setSubmissions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Ambil data user dari localStorage
   const storedUser = JSON.parse(localStorage.getItem("user"));
   const role = storedUser?.role;
   const username = storedUser?.username;
 
-  // Handle perubahan file
+  // Fetch submissions jika role adalah dosen atau admin
+  useEffect(() => {
+    const fetchSubmissions = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/api/submissions", {
+          params: { class_id: classId },
+          headers: { username, role },
+          withCredentials: true,
+        });
+        setSubmissions(response.data);
+      } catch (err) {
+        console.error("Failed to fetch submissions:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (role === "dosen" || role === "admin") {
+      fetchSubmissions();
+    }
+  }, [role, classId, username]);
+
+  // Submit nilai ke backend
+  const submitGrade = async (submissionId, grade) => {
+    try {
+      await axios.post(
+        "http://localhost:5000/api/submissions/grade",
+        { submission_id: submissionId, grade },
+        { headers: { username, role }, withCredentials: true }
+      );
+      alert("Grade assigned successfully!");
+      // Update grade pada state submissions
+      setSubmissions((prev) =>
+        prev.map((submission) =>
+          submission.submission_id === submissionId
+            ? { ...submission, grade }
+            : submission
+        )
+      );
+    } catch (err) {
+      console.error("Failed to assign grade:", err);
+      alert("Failed to assign grade. Please try again.");
+    }
+  };
+
+  // Handle file upload untuk mahasiswa
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
   };
 
-  // Submit form tugas
   const submitTask = async (e) => {
     e.preventDefault();
 
@@ -32,23 +75,16 @@ const SubmissionPage = () => {
     if (file) formData.append("file", file);
 
     try {
-      // Kirim request ke server
       await axios.post("http://localhost:5000/api/submissions", formData, {
         headers: { username, role, "Content-Type": "multipart/form-data" },
         withCredentials: true,
       });
 
-      // Simpan classId ke localStorage untuk keperluan navigasi
-      localStorage.setItem("classId", classId);
-
-      // Berikan notifikasi sukses
       alert("Submission uploaded successfully!");
-
-      // Arahkan ke halaman class page
-      navigate(`/dashboard`);
+      navigate(`/dashboard`, { state: { classId } });
     } catch (err) {
       console.error("Error submitting task:", err.response?.data || err.message);
-      alert("Failed to submit task. Please try again.");
+      alert("Failed to submit task.");
     }
   };
 
@@ -58,9 +94,10 @@ const SubmissionPage = () => {
       <div className="container mt-4">
         <div className="card shadow-sm">
           <div className="card-body">
-            <h2 className="card-title mb-4">Submit Your Task</h2>
-            {/* Form hanya ditampilkan jika role adalah mahasiswa */}
-            {role === "mahasiswa" ? (
+            <h2 className="card-title mb-4">Submission Page</h2>
+
+            {/* Jika role adalah mahasiswa, tampilkan form upload */}
+            {role === "mahasiswa" && (
               <form onSubmit={submitTask}>
                 <div className="mb-3">
                   <label htmlFor="taskTitle" className="form-label">
@@ -92,8 +129,62 @@ const SubmissionPage = () => {
                   Submit Task
                 </button>
               </form>
-            ) : (
-              <p className="text-danger">You are not authorized to submit tasks.</p>
+            )}
+
+            {/* Jika role adalah dosen atau admin, tampilkan daftar submission */}
+            {(role === "dosen" || role === "admin") && (
+              <>
+                <h3 className="mt-4">Submitted Tasks</h3>
+                {loading ? (
+                  <p>Loading submissions...</p>
+                ) : submissions.length > 0 ? (
+                  <table className="table table-bordered">
+                    <thead>
+                      <tr>
+                        <th>Task Title</th>
+                        <th>Username</th>
+                        <th>Submission Date</th>
+                        <th>File</th>
+                        <th>Grade</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {submissions.map((submission) => (
+                        <tr key={submission.submission_id}>
+                          <td>{submission.task_title}</td>
+                          <td>{submission.username}</td>
+                          <td>{new Date(submission.submission_date).toLocaleString()}</td>
+                          <td>
+                            <a
+                              href={submission.submission_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              Download
+                            </a>
+                          </td>
+                          <td>{submission.grade ?? "Not graded"}</td>
+                          <td>
+                            <input
+                              type="number"
+                              placeholder="Enter grade"
+                              min="0"
+                              max="100"
+                              className="form-control"
+                              onBlur={(e) =>
+                                submitGrade(submission.submission_id, e.target.value)
+                              }
+                            />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <p>No submissions found for this class.</p>
+                )}
+              </>
             )}
           </div>
         </div>
