@@ -7,6 +7,7 @@ import SubmissionPage from "./pages/SubmissionPage";
 import LoginPage from "./pages/LoginPage";
 import NotificationPage from "./pages/NotificationsPage";
 import CreateClass from "./pages/CreateClass";
+import AddUser from "./pages/AddUser";
 
 const App = () => {
   return (
@@ -20,6 +21,7 @@ const App = () => {
         <Route path="/submission" element={<SubmissionPage />} />
         <Route path="/notifications" element={<NotificationPage />} />
         <Route path="createClass" element={<CreateClass />} />
+        <Route path="/addUser" element={<AddUser />} />
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     </Router>

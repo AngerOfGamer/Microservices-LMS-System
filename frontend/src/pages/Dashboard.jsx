@@ -54,12 +54,20 @@ const DashboardPage = () => {
         {!loading && (
           <>
             {user.role === "admin" && (
-              <button
-                className="btn btn-primary mb-4"
-                onClick={() => navigate("/createClass")}
-              >
-                Buat Kelas
-              </button>
+              <div className="d-flex mb-4">
+                <button
+                  className="btn btn-primary me-2"
+                  onClick={() => navigate("/createClass")}
+                >
+                  Buat Kelas
+                </button>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => navigate("/addUser")}
+                >
+                  Tambah Pengguna
+                </button>
+              </div>
             )}
 
             <div className="row">
