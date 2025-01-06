@@ -92,7 +92,7 @@ const DashboardPage = () => {
                         className="card-img-top"
                         style={{
                           height: "150px",
-                          background: `url('https://via.placeholder.com/300x150') no-repeat center center`,
+                          background: "url('/images/img1.png') no-repeat center center",
                           backgroundSize: "cover",
                         }}
                       ></div>
