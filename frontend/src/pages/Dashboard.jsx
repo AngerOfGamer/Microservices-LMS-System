@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
 import NavBar from "../components/NavBar";
 
@@ -18,21 +19,14 @@ const DashboardPage = () => {
         setUser(userData);
 
         try {
-          const response = await fetch(
+          const response = await axios.get(
             `http://localhost:5000/api/classes?user_id=${userData.user_id}`,
-            { method: "GET", credentials: "include" }
+            { withCredentials: true }
           );
-
-          if (response.ok) {
-            const data = await response.json();
-            setClasses(data.classes || []);
-          } else {
-            const errorData = await response.json();
-            setError(errorData.message || "Gagal memuat kelas");
-          }
+          setClasses(response.data.classes || []);
         } catch (err) {
           console.error("Error fetching classes:", err);
-          setError("Terjadi kesalahan. Silakan coba lagi.");
+          setError(err.response?.data?.message || "Gagal memuat kelas");
         } finally {
           setLoading(false);
         }
@@ -45,7 +39,7 @@ const DashboardPage = () => {
   }, [navigate]);
 
   if (!user) return null;
-  
+
   const handleCardClick = (classId) => {
     navigate(`/class/${classId}`);
   };

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import axios from "axios";
 import ContentPage from "./ContentsPage";
 import AttendancePage from "./AttendancePage";
 import NavBar from "../components/NavBar";
@@ -26,20 +27,13 @@ const ClassPage = () => {
 
     const fetchClassData = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/classes/${class_id}`, {
-          credentials: "include",
+        const response = await axios.get(`http://localhost:5000/api/classes/${class_id}`, {
+          withCredentials: true, // Sama dengan credentials: "include" di fetch
         });
-
-        if (response.ok) {
-          const data = await response.json();
-          setClassDetails(data.class); 
-        } else {
-          const errorData = await response.json();
-          setError(errorData.message || "Gagal memuat data kelas");
-        }
+        setClassDetails(response.data.class);
       } catch (error) {
         console.error("Error fetching class details:", error);
-        setError("Terjadi kesalahan. Silakan coba lagi.");
+        setError(error.response?.data?.message || "Terjadi kesalahan. Silakan coba lagi.");
       } finally {
         setLoading(false);
       }
