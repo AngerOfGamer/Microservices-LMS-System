@@ -14,7 +14,7 @@ const userRoutes = require("./routes/user");
 const notificationsRoutes = require("./routes/notifications");
 const submissionsRoutes = require("./routes/submissions")
 
-const app = express();
+const app = express(); 
 
 // Middleware untuk session dan cookie
 app.use(cookieParser());  
