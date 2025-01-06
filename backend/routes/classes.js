@@ -11,35 +11,26 @@ router.get("/", (req, res) => {
 
   const { role, user_id } = req.session.user;
 
-  let sql;
-  let params;
-
-  if (role === "admin") {
-    // Admin: Lihat semua kelas
-    sql = "SELECT * FROM classes";
-    params = [];
-  } else if (role === "dosen" || role === "mahasiswa") {
-    // Dosen/Mahasiswa: Lihat kelas yang diikuti
-    sql = `
-      SELECT c.class_id, c.class_name, c.description
-      FROM class_members cm
-      JOIN classes c ON cm.class_id = c.class_id
-      WHERE cm.user_id = ?`;
-    params = [user_id];
-  } else {
-    return res.status(403).json({ message: "Akses ditolak" });
+  if (role !== "dosen") {
+    return res.status(403).json({ message: "Hanya dosen yang dapat mengakses data kelas ini." });
   }
 
-  // Eksekusi query
-  db.query(sql, params, (err, results) => {
+  const sql = `
+    SELECT c.class_id, c.class_name
+    FROM classes c
+    JOIN class_members cm ON cm.class_id = c.class_id
+    WHERE cm.user_id = ? AND cm.role = 'dosen'`;
+
+  db.query(sql, [user_id], (err, results) => {
     if (err) {
-      console.error("Database error:", err);
-      return res.status(500).json({ error: "Kesalahan server" });
+      console.error("Kesalahan query kelas:", err);
+      return res.status(500).json({ message: "Kesalahan server." });
     }
 
     res.json({ classes: results });
   });
 });
+
 
 // Endpoint untuk membuat kelas baru
 router.post("/", (req, res) => {

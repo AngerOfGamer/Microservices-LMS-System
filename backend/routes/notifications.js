@@ -3,67 +3,101 @@ const db = require("../db");
 
 const router = express.Router();
 
-// 1. Tambah Notifikasi Baru
+// Endpoint untuk membuat notifikasi baru
 router.post("/", (req, res) => {
-  const { user_id, title, message, type } = req.body;
-
-  if (!user_id || !title || !message || !type) {
-    return res.status(400).json({ error: "Missing required fields" });
+  if (!req.session.user) {
+    return res.status(401).json({ message: "Anda belum login." });
   }
 
-  const sql = `
-    INSERT INTO notifications (user_id, title, message, type, is_read, created_at)
-    VALUES (?, ?, ?, ?, 0, NOW())
-  `;
+  const { role, user_id } = req.session.user; // Role dan ID user dari sesi
+  const { title, content, category, class_id } = req.body; // Data dari frontend
 
-  db.query(sql, [user_id, title, message, type], (err, result) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.status(201).json({ message: "Notification created successfully", notification_id: result.insertId });
-  });
-});
+  // Validasi input
+  if (!title || !content || !category) {
+    return res.status(400).json({ message: "Judul, konten, dan kategori wajib diisi." });
+  }
 
-// 2. Ambil Semua Notifikasi
-router.get("/", (req, res) => {
-  const sql = "SELECT * FROM notifications ORDER BY created_at DESC";
+  // Role-specific validation
+  if (role === "admin" && category !== "libur") {
+    return res.status(403).json({ message: "Admin hanya dapat membuat notifikasi kategori libur." });
+  }
 
-  db.query(sql, (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(results);
-  });
-});
+  if (role === "dosen" && (!class_id || ["materi", "tugas", "penilaian"].indexOf(category) === -1)) {
+    return res.status(403).json({
+      message: "Dosen hanya dapat membuat notifikasi kategori materi, tugas, atau penilaian untuk kelas tertentu.",
+    });
+  }
 
-// 3. Tandai Notifikasi sebagai Dibaca
-router.patch("/:notification_id", (req, res) => {
-  const { notification_id } = req.params;
+  // Jika role adalah dosen, periksa apakah dia mengajar di kelas yang dimaksud
+  if (role === "dosen") {
+    const sqlCheckClass = `
+      SELECT c.class_id
+      FROM classes c
+      JOIN class_members cm ON cm.class_id = c.class_id
+      WHERE cm.user_id = ? AND cm.role = 'dosen' AND c.class_id = ?`;
 
-  const sql = `
-    UPDATE notifications 
-    SET is_read = 1 
-    WHERE notification_id = ?
-  `;
+    db.query(sqlCheckClass, [user_id, class_id], (err, results) => {
+      if (err) {
+        console.error("Kesalahan query:", err);
+        return res.status(500).json({ message: "Kesalahan server saat memvalidasi kelas." });
+      }
 
-  db.query(sql, [notification_id], (err, result) => {
-    if (err) return res.status(500).json({ error: err.message });
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: "Notification not found" });
+      if (results.length === 0) {
+        return res.status(403).json({ message: "Anda tidak mengajar di kelas ini." });
+      }
+
+      // Validasi berhasil, lanjutkan membuat notifikasi
+      createNotification();
+    });
+  } else {
+    // Jika role admin, langsung lanjutkan pembuatan notifikasi
+    createNotification();
+  }
+
+  function createNotification() {
+    // Ambil recipient IDs jika kategori membutuhkan target spesifik
+    if (role === "dosen") {
+      const sqlGetStudents = `
+        SELECT user_id
+        FROM class_members
+        WHERE class_id = ? AND role = 'mahasiswa'`;
+
+      db.query(sqlGetStudents, [class_id], (err, studentResults) => {
+        if (err) {
+          console.error("Kesalahan query mahasiswa:", err);
+          return res.status(500).json({ message: "Kesalahan server saat mengambil mahasiswa." });
+        }
+
+        const recipientIds = studentResults.map((student) => student.user_id);
+        saveNotification(recipientIds);
+      });
+    } else {
+      // Admin tidak membutuhkan recipient spesifik
+      saveNotification(null);
     }
-    res.json({ message: "Notification marked as read" });
-  });
-});
+  }
 
-// 4. Hapus Notifikasi
-router.delete("/:notification_id", (req, res) => {
-  const { notification_id } = req.params;
+  function saveNotification(recipientIds) {
+    const sqlInsertNotification = `
+      INSERT INTO notifications (title, content, category, role, class_id, recipient_ids, created_by, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`;
 
-  const sql = "DELETE FROM notifications WHERE notification_id = ?";
+    db.query(
+      sqlInsertNotification,
+      [title, content, category, "mahasiswa", class_id || null, JSON.stringify(recipientIds), user_id],
+      (err, result) => {
+        if (err) {
+          console.error("Kesalahan query notifikasi:", err);
+          return res.status(500).json({ message: "Gagal membuat notifikasi." });
+        }
 
-  db.query(sql, [notification_id], (err, result) => {
-    if (err) return res.status(500).json({ error: err.message });
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: "Notification not found" });
-    }
-    res.json({ message: "Notification deleted successfully" });
-  });
+        res.status(201).json({
+          message: "Notifikasi berhasil dibuat.",
+          notificationId: result.insertId,
+        });
+      }
+    );
+  }
 });
 
 module.exports = router;
