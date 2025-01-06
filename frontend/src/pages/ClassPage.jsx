@@ -1,84 +1,110 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import ContentPage from "./ContentsPage";
+import AttendancePage from "./AttendancePage";
+import NavBar from "../components/NavBar";
 import "bootstrap/dist/css/bootstrap.min.css";
 
-const LoginPage = () => {
+const ClassPage = () => {
+  const { class_id } = useParams(); 
   const navigate = useNavigate();
+  
+  const [role, setRole] = useState(null); 
+  const [classDetails, setClassDetails] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(""); 
+  const [activeTab, setActiveTab] = useState("contents");
 
-  const [username, setUsername] = useState("");
-  const [nip_nim, setNipNim] = useState("");
-  const [error, setError] = useState("");
-
-  const handleLogin = async () => {
-    try {
-      const response = await fetch("http://localhost:5000/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include", // Kirim session cookie ke backend
-        body: JSON.stringify({ username, nip_nim }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log("Login berhasil:", data);
-
-        // Simpan data user ke localStorage
-        localStorage.setItem("user", JSON.stringify(data.user));
-
-        // Arahkan pengguna ke halaman yang sesuai
-        navigate("/dashboard");
-      } else {
-        const errorData = await response.json();
-        setError(errorData.error || errorData.message); // Tampilkan pesan error
-      }
-    } catch (err) {
-      console.error("Error saat login:", err);
-      setError("Terjadi kesalahan. Silakan coba lagi.");
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+      setRole(user.role); 
+    } else {
+      navigate("/login");
     }
-  };
+
+    const fetchClassData = async () => {
+      try {
+        const response = await fetch(`http://localhost:5000/api/classes/${class_id}`, {
+          credentials: "include",
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setClassDetails(data.class); 
+        } else {
+          const errorData = await response.json();
+          setError(errorData.message || "Gagal memuat data kelas");
+        }
+      } catch (error) {
+        console.error("Error fetching class details:", error);
+        setError("Terjadi kesalahan. Silakan coba lagi.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchClassData();
+  }, [class_id, navigate]);
 
   return (
-    <div className="container d-flex justify-content-center align-items-center vh-100 bg-light">
-      <div className="card shadow-sm p-4" style={{ width: "100%", maxWidth: "400px" }}>
-        <h1 className="text-center mb-4">Login</h1>
-        {error && <div className="alert alert-danger">{error}</div>}
-        <div className="mb-3">
-          <label htmlFor="username" className="form-label">
-            Username
-          </label>
-          <input
-            id="username"
-            type="text"
-            placeholder="Masukkan Username"
-            className="form-control"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-        </div>
-        <div className="mb-3">
-          <label htmlFor="nipNim" className="form-label">
-            NIP/NIM
-          </label>
-          <input
-            id="nipNim"
-            type="text"
-            placeholder="Masukkan NIP/NIM"
-            className="form-control"
-            value={nip_nim}
-            onChange={(e) => setNipNim(e.target.value)}
-          />
-        </div>
-        <button
-          onClick={handleLogin}
-          className="btn btn-primary w-100"
-        >
-          Login
-        </button>
+    <div>
+      <NavBar />
+      <div className="container mt-4">
+        {loading ? (
+          <p className="text-center">Loading...</p>
+        ) : error ? (
+          <div className="alert alert-danger text-center" role="alert">
+            {error}
+          </div>
+        ) : classDetails ? (
+          <div>
+            <div className="card shadow-sm mb-4">
+              <div className="card-body">
+                <h2 className="card-title fw-bold">{classDetails.class_name}</h2>
+                <p className="card-text text-muted">{classDetails.description}</p>
+              </div>
+            </div>
+
+            <ul className="nav nav-tabs mb-4">
+              <li className="nav-item">
+                <button
+                  className={`nav-link ${activeTab === "contents" ? "active" : ""}`}
+                  onClick={() => setActiveTab("contents")}
+                >
+                  Contents
+                </button>
+              </li>
+              <li className="nav-item">
+                <button
+                  className={`nav-link ${activeTab === "attendance" ? "active" : ""}`}
+                  onClick={() => setActiveTab("attendance")}
+                >
+                  Attendance
+                </button>
+              </li>
+            </ul>
+
+            <div className="tab-content">
+              {activeTab === "contents" && (
+                <div className="tab-pane fade show active">
+                  <ContentPage role={role} classId={class_id} />
+                </div>
+              )}
+              {activeTab === "attendance" && (
+                <div className="tab-pane fade show active">
+                  <AttendancePage role={role} classId={class_id} />
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <p className="text-center">No class found.</p>
+        )}
       </div>
     </div>
   );
 };
 
-export default LoginPage;
+export default ClassPage;
