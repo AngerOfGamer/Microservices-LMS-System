@@ -11,26 +11,41 @@ router.get("/", (req, res) => {
 
   const { role, user_id } = req.session.user;
 
-  if (role !== "dosen") {
-    return res.status(403).json({ message: "Hanya dosen yang dapat mengakses data kelas ini." });
+  let sql;
+  let params = [];
+
+  if (role === "admin") {
+    // Admin mendapatkan semua kelas
+    sql = "SELECT class_id, class_name, description, created_at FROM classes";
+  } else if (role === "dosen") {
+    // Dosen mendapatkan kelas yang mereka kelola
+    sql = `
+      SELECT c.class_id, c.class_name, c.description, c.created_at
+      FROM classes c
+      JOIN class_members cm ON cm.class_id = c.class_id
+      WHERE cm.user_id = ? AND cm.role = 'dosen'`;
+    params = [user_id];
+  } else if (role === "mahasiswa") {
+    // Mahasiswa mendapatkan kelas yang mereka ikuti
+    sql = `
+      SELECT c.class_id, c.class_name, c.description, c.created_at
+      FROM classes c
+      JOIN class_members cm ON cm.class_id = c.class_id
+      WHERE cm.user_id = ? AND cm.role = 'mahasiswa'`;
+    params = [user_id];
+  } else {
+    return res.status(403).json({ message: "Role tidak dikenali." });
   }
 
-  const sql = `
-    SELECT c.class_id, c.class_name
-    FROM classes c
-    JOIN class_members cm ON cm.class_id = c.class_id
-    WHERE cm.user_id = ? AND cm.role = 'dosen'`;
-
-  db.query(sql, [user_id], (err, results) => {
+  db.query(sql, params, (err, results) => {
     if (err) {
-      console.error("Kesalahan query kelas:", err);
+      console.error("Kesalahan query kelas:", err.message);
       return res.status(500).json({ message: "Kesalahan server." });
     }
 
     res.json({ classes: results });
   });
 });
-
 
 // Endpoint untuk membuat kelas baru
 router.post("/", (req, res) => {
@@ -44,7 +59,7 @@ router.post("/", (req, res) => {
   const sqlInsertClass = "INSERT INTO classes (class_name, description, created_at) VALUES (?, ?, NOW())";
   db.query(sqlInsertClass, [class_name, description], (err, results) => {
     if (err) {
-      console.error("Database error:", err);
+      console.error("Kesalahan server saat membuat kelas:", err.message);
       return res.status(500).json({ message: "Kesalahan server saat membuat kelas" });
     }
 
@@ -55,7 +70,7 @@ router.post("/", (req, res) => {
     const sqlInsertMembers = "INSERT INTO class_members (user_id, class_id, role, joined_at) VALUES ?";
     db.query(sqlInsertMembers, [classMembers], (err) => {
       if (err) {
-        console.error("Database error:", err);
+        console.error("Kesalahan server saat menambahkan anggota kelas:", err.message);
         return res.status(500).json({ message: "Kesalahan server saat menambahkan anggota kelas" });
       }
 
@@ -64,11 +79,11 @@ router.post("/", (req, res) => {
   });
 });
 
+// Endpoint untuk mendapatkan detail kelas berdasarkan class_id
 router.get("/:class_id", (req, res) => {
   const { class_id } = req.params;
-  console.log("Permintaan diterima dengan class_id:", class_id);
 
-  const sqlClass = `SELECT * FROM classes WHERE class_id = ?;`;
+  const sqlClass = "SELECT * FROM classes WHERE class_id = ?";
   const sqlMembers = `
     SELECT u.user_id, u.username, cm.role
     FROM class_members cm
@@ -78,11 +93,9 @@ router.get("/:class_id", (req, res) => {
 
   db.query(sqlClass, [class_id], (err, classResults) => {
     if (err) {
-      console.error("Kesalahan query kelas:", err);
+      console.error("Kesalahan server saat memuat kelas:", err.message);
       return res.status(500).json({ message: "Kesalahan server saat memuat kelas" });
     }
-
-    console.log("Hasil query kelas:", classResults);
 
     if (classResults.length === 0) {
       return res.status(404).json({ message: "Kelas tidak ditemukan" });
@@ -90,11 +103,9 @@ router.get("/:class_id", (req, res) => {
 
     db.query(sqlMembers, [class_id], (err, memberResults) => {
       if (err) {
-        console.error("Kesalahan query anggota kelas:", err);
+        console.error("Kesalahan server saat memuat anggota kelas:", err.message);
         return res.status(500).json({ message: "Kesalahan server saat memuat anggota kelas" });
       }
-
-      console.log("Hasil query anggota kelas:", memberResults);
 
       res.json({
         class: {
@@ -105,6 +116,5 @@ router.get("/:class_id", (req, res) => {
     });
   });
 });
-
 
 module.exports = router;
