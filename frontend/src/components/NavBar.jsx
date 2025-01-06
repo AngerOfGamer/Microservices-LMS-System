@@ -1,10 +1,23 @@
 import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
+import "bootstrap/dist/js/bootstrap.bundle.min";
 
 const NavBar = () => {
   const navigate = useNavigate();
+  const [username, setUsername] = useState("");
+
+  useEffect(() => {
+    // Ambil username dari localStorage
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    if (storedUser?.username) {
+      setUsername(storedUser.username);
+    }
+  }, []);
 
   const handleLogout = () => {
+    // Hapus data pengguna dari localStorage
+    localStorage.removeItem("user");
     console.log("User logged out");
     navigate("/login");
   };
@@ -31,7 +44,7 @@ const NavBar = () => {
             </span>
           </button>
 
-          {/* Profile and Logout */}
+          {/* Profile Dropdown */}
           <div className="dropdown">
             <button
               className="btn btn-outline-light dropdown-toggle"
@@ -46,9 +59,12 @@ const NavBar = () => {
                 className="rounded-circle me-2"
                 style={{ width: "30px", height: "30px" }}
               />
-              John Doe
+              {username || "Guest"}
             </button>
-            <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+            <ul
+              className="dropdown-menu dropdown-menu-end"
+              aria-labelledby="profileDropdown"
+            >
               <li>
                 <button className="dropdown-item" onClick={handleLogout}>
                   Logout
