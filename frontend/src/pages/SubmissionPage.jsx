@@ -45,7 +45,7 @@ const SubmissionPage = () => {
       alert("Submission uploaded successfully!");
 
       // Arahkan ke halaman class page
-      navigate(`/classpage/${classId}`);
+      navigate(`/dashboard`);
     } catch (err) {
       console.error("Error submitting task:", err.response?.data || err.message);
       alert("Failed to submit task. Please try again.");
