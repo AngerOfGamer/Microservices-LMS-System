@@ -7,28 +7,36 @@ const Notification = () => {
   const [category, setCategory] = useState("");
   const [classId, setClassId] = useState("");
   const [classes, setClasses] = useState([]);
-  const [recipientIds, setRecipientIds] = useState("");
-
   const [role, setRole] = useState(""); // Role pengguna
+  const [notifications, setNotifications] = useState([]); // Notifikasi untuk mahasiswa
+  const [error, setError] = useState(""); // Error saat mengambil data
+  const [loading, setLoading] = useState(true); // Status loading
 
   useEffect(() => {
-    // Fetch role pengguna dan daftar kelas
     const fetchData = async () => {
       try {
-        // Ambil role pengguna dari session atau localStorage
+        // Ambil role pengguna dari localStorage
         const storedUser = JSON.parse(localStorage.getItem("user"));
         setRole(storedUser.role);
 
-        // Hanya dosen yang perlu daftar kelas
         if (storedUser.role === "dosen") {
+          // Ambil kelas yang diajarkan dosen
           const response = await axios.get("http://localhost:5000/api/classes", {
             withCredentials: true,
           });
           setClasses(response.data.classes);
+        } else if (storedUser.role === "mahasiswa") {
+          // Ambil notifikasi untuk mahasiswa
+          const response = await axios.get("http://localhost:5000/api/notifications", {
+            withCredentials: true,
+          });
+          setNotifications(response.data.notifications);
         }
       } catch (err) {
-        console.error("Gagal mengambil data:", err);
-        alert("Gagal mengambil data.");
+        console.error("Gagal mengambil data:", err.response?.data || err.message);
+        setError("Gagal mengambil data.");
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -43,8 +51,7 @@ const Notification = () => {
         title,
         content,
         category,
-        class_id: role === "dosen" ? classId : null, // Hanya dosen yang mengirim ke kelas tertentu
-        recipientIds: recipientIds ? JSON.parse(recipientIds) : null,
+        class_id: role === "dosen" ? classId : null, // Dosen mengirim ke kelas tertentu
       };
 
       await axios.post("http://localhost:5000/api/notifications", payload, {
@@ -56,13 +63,57 @@ const Notification = () => {
       setContent("");
       setCategory("");
       setClassId("");
-      setRecipientIds("");
     } catch (err) {
-      console.error("Gagal membuat notifikasi:", err);
+      console.error("Gagal membuat notifikasi:", err.response?.data || err.message);
       alert("Gagal membuat notifikasi.");
     }
   };
 
+  if (loading) {
+    return (
+      <div className="container mt-4">
+        <h2 className="mb-4">Notifikasi</h2>
+        <p>Sedang memuat data...</p>
+      </div>
+    );
+  }
+
+  if (role === "mahasiswa") {
+    // Tampilan khusus untuk mahasiswa melihat notifikasi
+    return (
+      <div className="container mt-4">
+        <h2 className="mb-4">Notifikasi</h2>
+        {error && <p className="text-danger">{error}</p>}
+        {notifications.length > 0 ? (
+          <ul className="list-group">
+            {notifications.map((notif) => (
+              <li key={notif.notification_id} className="list-group-item">
+                <h5>{notif.title}</h5>
+                <p>{notif.content}</p>
+                <small className="text-muted">
+                  {new Date(notif.created_at).toLocaleString()}
+                </small>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>Tidak ada notifikasi untuk Anda saat ini.</p>
+        )}
+      </div>
+    );
+  }
+
+  if (role === "dosen" && classes.length === 0) {
+    // Tampilan jika dosen tidak memiliki kelas
+    return (
+      <div className="container mt-4">
+        <h2 className="mb-4">Tidak Ada Kelas</h2>
+        <p>Anda belum terdaftar sebagai pengajar di kelas mana pun.</p>
+      </div>
+    );
+  }
+
+  // Tampilan untuk dosen atau admin membuat notifikasi
   return (
     <div className="container mt-4">
       <h2 className="mb-4">Buat Notifikasi</h2>
@@ -117,23 +168,10 @@ const Notification = () => {
               <>
                 <option value="materi">Materi</option>
                 <option value="tugas">Tugas</option>
-                <option value="penilaian">Penilaian</option>
               </>
             )}
           </select>
         </div>
-        {role !== "mahasiswa" && (
-          <div className="mb-3">
-            <label className="form-label">Penerima (JSON Array)</label>
-            <input
-              type="text"
-              className="form-control"
-              value={recipientIds}
-              onChange={(e) => setRecipientIds(e.target.value)}
-              placeholder='Contoh: ["1", "2", "3"]'
-            />
-          </div>
-        )}
         <button type="submit" className="btn btn-primary">
           Buat Notifikasi
         </button>
