@@ -14,7 +14,7 @@ RUN npm install
 COPY . .
 
 # Expose port untuk backend
-EXPOSE 3001
+EXPOSE 3000
 
 # Jalankan aplikasi Node.js
 CMD ["node", "db.js"]
