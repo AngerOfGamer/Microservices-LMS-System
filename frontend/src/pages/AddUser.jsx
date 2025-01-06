@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import NavBar from "../components/NavBar";
 
 const AddUserPage = () => {
   const [formData, setFormData] = useState({
@@ -14,9 +15,10 @@ const AddUserPage = () => {
 
   // Ambil role dari localStorage
   useEffect(() => {
-    const storedUser = JSON.parse(localStorage.getItem("user"));
+    const storedUser = localStorage.getItem("user");
     if (storedUser) {
-      setRole(storedUser.role);
+      const userData = JSON.parse(storedUser);
+      setRole(userData.role);
     }
   }, []);
 
@@ -24,10 +26,11 @@ const AddUserPage = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/users");
+        const response = await axios.get("http://localhost:5000/api/users");
         setUsers(response.data);
       } catch (err) {
         console.error("Error fetching users:", err.response?.data || err.message);
+        setError("Gagal memuat daftar pengguna. Silakan coba lagi.");
       }
     };
 
@@ -56,13 +59,16 @@ const AddUserPage = () => {
       const updatedUsers = await axios.get("http://localhost:5000/api/users");
       setUsers(updatedUsers.data);
     } catch (err) {
+      console.error("Error creating user:", err.response?.data || err.message);
       setError(err.response?.data?.error || "Gagal menambahkan pengguna");
     }
   };
 
   return (
+    <div>
+      <NavBar/>
     <div className="container mt-4">
-      <h2 className="mb-4">Manage Users</h2>
+      <h2 className="mb-4">Kelola Pengguna</h2>
 
       {/* Form Tambah Pengguna untuk Admin */}
       {role === "admin" && (
@@ -120,8 +126,8 @@ const AddUserPage = () => {
                 Tambahkan
               </button>
             </form>
-            {message && <p className="text-success mt-3">{message}</p>}
-            {error && <p className="text-danger mt-3">{error}</p>}
+            {message && <div className="alert alert-success mt-3">{message}</div>}
+            {error && <div className="alert alert-danger mt-3">{error}</div>}
           </div>
         </div>
       )}
@@ -139,17 +145,23 @@ const AddUserPage = () => {
               </tr>
             </thead>
             <tbody>
-              {users.map((user, index) => (
-                <tr key={index}>
-                  <td>{user.username}</td>
-                  <td>{user.nip_nim}</td>
-                  <td>{user.role}</td>
-                </tr>
-              ))}
+              {users
+                .sort((a, b) => {
+                  const roleOrder = { admin: 1, dosen: 2, mahasiswa: 3 };
+                  return roleOrder[a.role] - roleOrder[b.role];
+                })
+                .map((user, index) => (
+                  <tr key={index}>
+                    <td>{user.username}</td>
+                    <td>{user.nip_nim}</td>
+                    <td>{user.role}</td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         </div>
       </div>
+    </div>
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import NavBar from "../components/NavBar";
 
 const CreateClass = () => {
@@ -10,6 +11,7 @@ const CreateClass = () => {
   const [selectedUsers, setSelectedUsers] = useState([]); // Pengguna yang dipilih
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   // Ambil daftar dosen dan mahasiswa dari backend
   useEffect(() => {
@@ -46,11 +48,19 @@ const CreateClass = () => {
         { withCredentials: true }
       );
 
-      if (response.status === 200) {
+      if (response.status === 201) {
         setSuccess("Kelas berhasil dibuat!");
         setClassName("");
         setDescription("");
         setSelectedUsers([]);
+
+        console.log("Navigasi ke dashboard...");
+        // Navigasi ke dashboard setelah pesan sukses ditampilkan
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 2000); // Beri jeda 2 detik untuk menampilkan pesan sukses
+      } else {
+        console.error("Status tidak sesuai:", response.status);
       }
     } catch (err) {
       console.error("Error creating class:", err);
