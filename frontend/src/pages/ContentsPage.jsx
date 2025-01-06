@@ -93,8 +93,7 @@ const ContentPage = ({ classId }) => {
       <h2 className="mb-4">Content Management</h2>
 
       {localStorage.getItem("user") &&
-        (JSON.parse(localStorage.getItem("user")).role === "admin" || 
-        JSON.parse(localStorage.getItem("user")).role === "dosen") && (
+        JSON.parse(localStorage.getItem("user")).role !== "mahasiswa" && (
           <div className="card shadow-sm mb-4">
             <div className="card-body">
               <h5 className="card-title">Add New Content</h5>
