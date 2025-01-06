@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
+import axios from "axios";
 import NavBar from "../components/NavBar";
 
 const CreateClass = () => {
@@ -14,19 +15,13 @@ const CreateClass = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/users/roles", {
-          method: "GET",
-          credentials: "include",
+        const response = await axios.get("http://localhost:5000/api/users/roles", {
+          withCredentials: true,
         });
-        if (response.ok) {
-          const data = await response.json();
-          setUsers(data.users);
-        } else {
-          setError("Gagal memuat data pengguna");
-        }
+        setUsers(response.data.users);
       } catch (err) {
         console.error("Error fetching users:", err);
-        setError("Terjadi kesalahan. Silakan coba lagi.");
+        setError(err.response?.data?.message || "Terjadi kesalahan. Silakan coba lagi.");
       }
     };
 
@@ -41,31 +36,25 @@ const CreateClass = () => {
     }
 
     try {
-      const response = await fetch("http://localhost:5000/api/classes", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
+      const response = await axios.post(
+        "http://localhost:5000/api/classes",
+        {
           class_name: className,
           description,
           selectedUsers,
-        }),
-      });
+        },
+        { withCredentials: true }
+      );
 
-      if (response.ok) {
+      if (response.status === 200) {
         setSuccess("Kelas berhasil dibuat!");
         setClassName("");
         setDescription("");
         setSelectedUsers([]);
-      } else {
-        const errorData = await response.json();
-        setError(errorData.message || "Gagal membuat kelas");
       }
     } catch (err) {
       console.error("Error creating class:", err);
-      setError("Terjadi kesalahan. Silakan coba lagi.");
+      setError(err.response?.data?.message || "Terjadi kesalahan. Silakan coba lagi.");
     }
   };
 
@@ -83,88 +72,82 @@ const CreateClass = () => {
 
   return (
     <div>
-    <NavBar />
-    <div className="container mt-4">
-      <h1 className="mb-4 text-center">Buat Kelas Baru</h1>
-      {success && <div className="alert alert-success">{success}</div>}
-      {error && <div className="alert alert-danger">{error}</div>}
+      <NavBar />
+      <div className="container mt-4">
+        <h1 className="mb-4 text-center">Buat Kelas Baru</h1>
+        {success && <div className="alert alert-success">{success}</div>}
+        {error && <div className="alert alert-danger">{error}</div>}
 
-      <div className="mb-4">
-        <label htmlFor="className" className="form-label">
-          Nama Kelas
-        </label>
-        <input
-          id="className"
-          type="text"
-          placeholder="Nama Kelas"
-          value={className}
-          onChange={(e) => setClassName(e.target.value)}
-          className="form-control"
-        />
-      </div>
-      <div className="mb-4">
-        <label htmlFor="description" className="form-label">
-          Deskripsi Kelas
-        </label>
-        <textarea
-          id="description"
-          placeholder="Deskripsi Kelas"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className="form-control"
-        ></textarea>
-      </div>
-
-      <div className="mb-4">
-        <h5 className="mb-3">Pilih Dosen dan Mahasiswa</h5>
-        <div className="row">
-          {users.map((user) => (
-            <div
-              key={user.user_id}
-              className="col-md-6 mb-3"
-            >
-              <button
-                onClick={() => handleSelectUser(user)}
-                className="btn btn-outline-primary w-100 text-start"
-              >
-                {user.username} ({user.role})
-              </button>
-            </div>
-          ))}
+        <div className="mb-4">
+          <label htmlFor="className" className="form-label">
+            Nama Kelas
+          </label>
+          <input
+            id="className"
+            type="text"
+            placeholder="Nama Kelas"
+            value={className}
+            onChange={(e) => setClassName(e.target.value)}
+            className="form-control"
+          />
         </div>
-      </div>
+        <div className="mb-4">
+          <label htmlFor="description" className="form-label">
+            Deskripsi Kelas
+          </label>
+          <textarea
+            id="description"
+            placeholder="Deskripsi Kelas"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="form-control"
+          ></textarea>
+        </div>
 
-      <div className="mb-4">
-        <h5 className="mb-3">Anggota Terpilih</h5>
-        {selectedUsers.length === 0 ? (
-          <p className="text-muted">Belum ada anggota yang dipilih.</p>
-        ) : (
-          <ul className="list-group">
-            {selectedUsers.map((user) => (
-              <li
-                key={user.user_id}
-                className="list-group-item d-flex justify-content-between align-items-center"
-              >
-                {user.username} ({user.role})
+        <div className="mb-4">
+          <h5 className="mb-3">Pilih Dosen dan Mahasiswa</h5>
+          <div className="row">
+            {users.map((user) => (
+              <div key={user.user_id} className="col-md-6 mb-3">
                 <button
-                  onClick={() => handleRemoveUser(user.user_id)}
-                  className="btn btn-danger btn-sm"
+                  onClick={() => handleSelectUser(user)}
+                  className="btn btn-outline-primary w-100 text-start"
                 >
-                  Hapus
+                  {user.username} ({user.role})
                 </button>
-              </li>
+              </div>
             ))}
-          </ul>
-        )}
-      </div>
+          </div>
+        </div>
 
-      <button
-        onClick={handleCreateClass}
-        className="btn btn-primary w-100"
-      >
-        Buat Kelas
-      </button>
-    </div>
+        <div className="mb-4">
+          <h5 className="mb-3">Anggota Terpilih</h5>
+          {selectedUsers.length === 0 ? (
+            <p className="text-muted">Belum ada anggota yang dipilih.</p>
+          ) : (
+            <ul className="list-group">
+              {selectedUsers.map((user) => (
+                <li
+                  key={user.user_id}
+                  className="list-group-item d-flex justify-content-between align-items-center"
+                >
+                  {user.username} ({user.role})
+                  <button
+                    onClick={() => handleRemoveUser(user.user_id)}
+                    className="btn btn-danger btn-sm"
+                  >
+                    Hapus
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <button onClick={handleCreateClass} className="btn btn-primary w-100">
+          Buat Kelas
+        </button>
+      </div>
     </div>
   );
 };
