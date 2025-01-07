@@ -14,12 +14,12 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: frontend-image:1.0
+        image: frontend-image:latest
         ports:
         - containerPort: 3000
         env:
         - name: BACKEND_URL
-          value: http://backend-service:5000
+          value: http://backend-service:5000/
 ---
 apiVersion: v1
 kind: Service

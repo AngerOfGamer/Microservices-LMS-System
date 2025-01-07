@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: backend
-        image: backend-image:1.0
+        image: backend-image:latest
         env:
         - name: DB_HOST
           value: database-service
@@ -38,4 +38,4 @@ spec:
   - protocol: TCP
     port: 5000
     targetPort: 5000
-  type: ClusterIP
+  type: NodePort
