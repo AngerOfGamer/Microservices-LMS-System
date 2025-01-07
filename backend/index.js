@@ -29,9 +29,16 @@ app.use(
 
 // Middleware
 const cors = require("cors");
+const allowedOrigins = [process.env.FRONTEND_URL || "http://localhost:3000"];
 app.use(
   cors({
-    origin: "http://localhost:3000", 
+    origin: (origin, callback) => {
+      if (allowedOrigins.includes(origin) || !origin) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true, 
   })
 );

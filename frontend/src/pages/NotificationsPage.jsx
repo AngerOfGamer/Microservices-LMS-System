@@ -29,12 +29,12 @@ const Notification = () => {
         setRole(storedUser.role);
 
         if (storedUser.role === "dosen") {
-          const response = await axios.get("http://localhost:5000/api/classes", {
+          const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/classes`, {
             withCredentials: true,
           });
           setClasses(response.data.classes);
         } else if (storedUser.role === "mahasiswa") {
-          const response = await axios.get("http://localhost:5000/api/notifications", {
+          const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/notifications`, {
             withCredentials: true,
           });
           setNotifications(response.data.notifications);
@@ -74,7 +74,7 @@ const Notification = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/notifications",
+        `${process.env.REACT_APP_BACKEND_URL}/api/notifications`,
         payload,
         { withCredentials: true }
       );

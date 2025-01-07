@@ -27,7 +27,7 @@ const ClassPage = () => {
 
     const fetchClassData = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/classes/${class_id}`, {
+        const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/classes/${class_id}`, {
           withCredentials: true, // Sama dengan credentials: "include" di fetch
         });
         setClassDetails(response.data.class);

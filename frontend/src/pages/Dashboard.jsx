@@ -20,7 +20,7 @@ const DashboardPage = () => {
 
         try {
           const response = await axios.get(
-            `http://localhost:5000/api/classes?user_id=${userData.user_id}`,
+            `${process.env.REACT_APP_BACKEND_URL}/api/classes?user_id=${userData.user_id}`,
             { withCredentials: true }
           );
           setClasses(response.data.classes || []);

@@ -17,7 +17,7 @@ const CreateClass = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/users/roles", {
+        const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/users/roles`, {
           withCredentials: true,
         });
         setUsers(response.data.users);
@@ -39,7 +39,7 @@ const CreateClass = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/classes",
+        `${process.env.REACT_APP_BACKEND_URL}/api/classes`,
         {
           class_name: className,
           description,

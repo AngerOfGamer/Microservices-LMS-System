@@ -26,7 +26,7 @@ const AddUserPage = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/users");
+        const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/users`);
         setUsers(response.data);
       } catch (err) {
         console.error("Error fetching users:", err.response?.data || err.message);
@@ -51,12 +51,12 @@ const AddUserPage = () => {
     setError("");
 
     try {
-      const response = await axios.post("http://localhost:5000/api/users", formData);
+      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/users`, formData);
       setMessage(response.data.message);
       setFormData({ username: "", nip_nim: "", role: "" });
 
       // Refresh user list
-      const updatedUsers = await axios.get("http://localhost:5000/api/users");
+      const updatedUsers = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/users`);
       setUsers(updatedUsers.data);
     } catch (err) {
       console.error("Error creating user:", err.response?.data || err.message);
