@@ -31,7 +31,7 @@ const AttendancePage = ({ classId }) => {
         if (role === "mahasiswa") {
           // Fetch rekap absensi mahasiswa
           const resRecap = await axios.get(
-            "http://localhost:5000/api/attendance/records",
+            `${process.env.REACT_APP_BACKEND_URL}/api/attendance/records`,
             {
               params: { class_id: classId },
               headers: { username, role },
@@ -42,7 +42,7 @@ const AttendancePage = ({ classId }) => {
         } else {
           // Fetch daftar mahasiswa dan rekap absensi
           const resStudents = await axios.get(
-            "http://localhost:5000/api/attendance/students",
+            `${process.env.REACT_APP_BACKEND_URL}/api/attendance/students`,
             {
               params: { class_id: classId },
               headers: { username, role },
@@ -52,7 +52,7 @@ const AttendancePage = ({ classId }) => {
           setStudents(resStudents.data);
 
           const resRecap = await axios.get(
-            "http://localhost:5000/api/attendance/recap",
+            `${process.env.REACT_APP_BACKEND_URL}/api/attendance/recap`,
             {
               params: { class_id: classId },
               headers: { username, role },
@@ -88,7 +88,7 @@ const AttendancePage = ({ classId }) => {
 
     try {
       await axios.post(
-        "http://localhost:5000/api/attendance",
+        `${process.env.REACT_APP_BACKEND_URL}/api/attendance`,
         { date, class_id: classId, attendance },
         {
           headers: { username, role },
@@ -100,7 +100,7 @@ const AttendancePage = ({ classId }) => {
 
       // Muat ulang rekap absensi setelah menyimpan
       const resRecap = await axios.get(
-        "http://localhost:5000/api/attendance/recap",
+        `${process.env.REACT_APP_BACKEND_URL}/api/attendance/recap`,
         {
           params: { class_id: classId },
           headers: { username, role },

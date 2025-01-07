@@ -20,7 +20,7 @@ const SubmissionPage = () => {
   useEffect(() => {
     const fetchSubmissions = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/submissions", {
+        const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/submissions`, {
           params: { class_id: classId },
           headers: { username, role },
           withCredentials: true,
@@ -42,7 +42,7 @@ const SubmissionPage = () => {
   const submitGrade = async (submissionId, grade) => {
     try {
       await axios.post(
-        "http://localhost:5000/api/submissions/grade",
+        `${process.env.REACT_APP_BACKEND_URL}/api/submissions/grade`,
         { submission_id: submissionId, grade },
         { headers: { username, role }, withCredentials: true }
       );
@@ -75,7 +75,7 @@ const SubmissionPage = () => {
     if (file) formData.append("file", file);
 
     try {
-      await axios.post("http://localhost:5000/api/submissions", formData, {
+      await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/submissions`, formData, {
         headers: { username, role, "Content-Type": "multipart/form-data" },
         withCredentials: true,
       });

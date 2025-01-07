@@ -25,7 +25,7 @@ const ContentPage = ({ classId }) => {
       }
 
       try {
-        const res = await axios.get("http://localhost:5000/api/content", {
+        const res = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/content`, {
           params: { class_id: classId },
           headers: { username, role },
           withCredentials: true,
@@ -68,7 +68,7 @@ const ContentPage = ({ classId }) => {
         formData.append("file", file);
       }
 
-      await axios.post("http://localhost:5000/api/content", formData, {
+      await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/content`, formData, {
         headers: { username, role, "Content-Type": "multipart/form-data" },
         withCredentials: true,
       });
@@ -76,7 +76,7 @@ const ContentPage = ({ classId }) => {
       alert("Konten berhasil ditambahkan!");
 
       // Refresh data
-      const res = await axios.get("http://localhost:5000/api/content", {
+      const res = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/content`, {
         params: { class_id: classId },
         headers: { username, role },
         withCredentials: true,
@@ -168,7 +168,7 @@ const ContentPage = ({ classId }) => {
                 </p>
                 {content.content_url && (
                   <a
-                    href={`http://localhost:5000${content.content_url}`}
+                    href={`${process.env.REACT_APP_BACKEND_URL}/${content.content_url}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="btn btn-link"
