@@ -29,7 +29,7 @@ app.use(
 
 // Middleware
 const cors = require("cors");
-const allowedOrigins = [process.env.FRONTEND_URL || "http://localhost:3000"];
+const allowedOrigins = ["http://localhost:3000"];
 app.use(
   cors({
     origin: (origin, callback) => {
