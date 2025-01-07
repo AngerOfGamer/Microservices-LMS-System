@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import NavBar from "../components/NavBar";
-
 
 const Notification = () => {
   const [title, setTitle] = useState("");
@@ -13,19 +11,11 @@ const Notification = () => {
   const [notifications, setNotifications] = useState([]); // Notifikasi untuk mahasiswa
   const [error, setError] = useState(""); // Error saat mengambil data
   const [loading, setLoading] = useState(true); // Status loading
-  const [isSubmitting, setIsSubmitting] = useState(false); // Status pengiriman data
 
-  // Ambil data user dari localStorage dan fetch data sesuai role
   useEffect(() => {
     const fetchData = async () => {
       try {
         const storedUser = JSON.parse(localStorage.getItem("user"));
-        if (!storedUser || !storedUser.role) {
-          alert("Anda belum login. Silakan login terlebih dahulu.");
-          window.location.href = "/login"; // Redirect ke halaman login
-          return;
-        }
-
         setRole(storedUser.role);
 
         if (storedUser.role === "dosen") {
@@ -50,34 +40,27 @@ const Notification = () => {
     fetchData();
   }, []);
 
-  // Fungsi untuk membuat notifikasi baru
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (isSubmitting) return;
 
-    // Validasi input
     if (!title || !content || !category || (role === "dosen" && !classId)) {
-      alert("Semua field wajib diisi.");
+      alert("Judul, konten, kategori, dan ID kelas wajib diisi.");
       return;
     }
 
-    setIsSubmitting(true);
-
-    const payload = {
-      title,
-      content,
-      category,
-      ...(role === "dosen" && { class_id: classId }),
-    };
-
-    console.log("Payload yang dikirim:", payload);
-
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/notifications",
-        payload,
-        { withCredentials: true }
-      );
+      const payload = {
+        title,
+        content,
+        category,
+        ...(role === "dosen" && { class_id: classId }),
+      };
+
+      console.log("Payload yang dikirim:", payload);
+
+      await axios.post("http://localhost:5000/api/notifications", payload, {
+        withCredentials: true,
+      });
 
       alert("Notifikasi berhasil dibuat!");
       setTitle("");
@@ -87,8 +70,6 @@ const Notification = () => {
     } catch (err) {
       console.error("Gagal membuat notifikasi:", err.response?.data || err.message);
       alert("Gagal membuat notifikasi. " + (err.response?.data?.message || ""));
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -105,7 +86,7 @@ const Notification = () => {
     return (
       <div className="container mt-4">
         <h2 className="mb-4">Notifikasi</h2>
-        {error && <div className="alert alert-danger">{error}</div>}
+        {error && <p className="text-danger">{error}</p>}
         {notifications.length > 0 ? (
           <ul className="list-group">
             {notifications.map((notif) => (
@@ -135,8 +116,6 @@ const Notification = () => {
   }
 
   return (
-    <div>
-    <NavBar />
     <div className="container mt-4">
       <h2 className="mb-4">Buat Notifikasi</h2>
       <form onSubmit={handleSubmit}>
@@ -191,16 +170,14 @@ const Notification = () => {
               <>
                 <option value="materi">Materi</option>
                 <option value="tugas">Tugas</option>
-                <option value="penilaian">Penilaian</option>
               </>
             )}
           </select>
         </div>
-        <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-          {isSubmitting ? "Mengirim..." : "Buat Notifikasi"}
+        <button type="submit" className="btn btn-primary">
+          Buat Notifikasi
         </button>
       </form>
-    </div>
     </div>
   );
 };
