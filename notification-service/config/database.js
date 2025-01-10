@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const connectDB = async () => {
     try {
         // Gunakan "mongodb" sebagai host, sesuai dengan nama service di docker-compose.yml
-        const conn = await mongoose.connect('mongodb://mongodb:27017/lms_database', {
+        const conn = await mongoose.connect('mongodb://localhost:27017/lms_database', {
             useNewUrlParser: true, // Opsional jika menggunakan driver MongoDB 4.0+
             useUnifiedTopology: true, // Opsional jika menggunakan driver MongoDB 4.0+
         });
