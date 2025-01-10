@@ -1,31 +1,99 @@
 version: "3.8"
-
 services:
   front-end:
     build:
       context: ./frontend
     ports:
-      - "3000:80" # Map port 3000 di host ke port 80 di container
+      - "3000:80"
+    networks:
+      - lms-network
+
+  attendance-service:
+    build:
+      context: ./attendance-service
+    ports:
+      - "5001:5001"
+    environment:
+      - MONGO_URL=mongodb://mongodb:27017/lms_database
     depends_on:
-      - notification-service
+      - mongodb
+    networks:
+      - lms-network
+
+  class-service:
+    build:
+      context: ./class-service
+    ports:
+      - "5002:5002"
+    environment:
+      - MONGO_URL=mongodb://mongodb:27017/lms_database
+    depends_on:
+      - mongodb
+    networks:
+      - lms-network
 
   notification-service:
     build:
       context: ./notification-service
     ports:
-      - "4000:5003" # Map port container 5003 ke port 4000 host
+      - "5003:5003"
+    environment:
+      - MONGO_URL=mongodb://mongodb:27017/lms_database
     depends_on:
       - mongodb
+    networks:
+      - lms-network
+
+  submission-and-grading-service:
+    build:
+      context: ./submission-and-grading-service
+    ports:
+      - "5004:5004"
     environment:
-      MONGODB_URI: mongodb://mongodb:27017/notifications # Format mapping key-value
+      - MONGO_URL=mongodb://mongodb:27017/lms_database
+    depends_on:
+      - mongodb
+    networks:
+      - lms-network
+
+  user-service:
+    build:
+      context: ./user-service
+    ports:
+      - "5005:5005"
+    environment:
+      - MONGO_URL=mongodb://mongodb:27017/lms_database
+    depends_on:
+      - mongodb
+    networks:
+      - lms-network
+
+  content-service:
+    build:
+      context: ./content-service
+    ports:
+      - "5006:5006"
+    environment:
+      - MONGO_URL=mongodb://mongodb:27017/lms_database
+    depends_on:
+      - mongodb
+    networks:
+      - lms-network
 
   mongodb:
-    image: mongo:6
+    image: mongo:latest
     container_name: mongodb
     ports:
       - "27017:27017"
     volumes:
       - mongodb_data:/data/db
+    restart: always
+    networks:
+      - lms-network
 
 volumes:
   mongodb_data:
+
+networks:
+  lms-network:
+    driver: bridge
