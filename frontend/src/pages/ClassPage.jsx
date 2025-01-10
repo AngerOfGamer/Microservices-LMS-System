@@ -1,101 +1,84 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import NavBar from "../components/NavBar";
 import ContentPage from "./ContentsPage";
 import AttendancePage from "./AttendancePage";
-import NavBar from "../components/NavBar";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 const ClassPage = () => {
-  const { class_id } = useParams(); 
+  const { class_id } = useParams();
   const navigate = useNavigate();
-  
-  const [role, setRole] = useState(null); 
   const [classDetails, setClassDetails] = useState(null);
+  const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(""); 
+  const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("contents");
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      const user = JSON.parse(storedUser);
-      setRole(user.role); 
-    } else {
-      navigate("/login");
-    }
+    const fetchClassDetails = async () => {
+      const storedUser = localStorage.getItem("user");
+      const user = storedUser ? JSON.parse(storedUser) : null;
 
-    const fetchClassData = async () => {
+      if (!user) {
+        navigate("/login");
+        return;
+      }
+
       try {
-        const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/classes/${class_id}`, {
-          withCredentials: true, // Sama dengan credentials: "include" di fetch
+        const response = await axios.get(`http://localhost:5002/class/${class_id}`, {
+          headers: {
+            username: user.username,
+            role: user.role,
+          },
         });
         setClassDetails(response.data.class);
-      } catch (error) {
-        console.error("Error fetching class details:", error);
-        setError(error.response?.data?.message || "Terjadi kesalahan. Silakan coba lagi.");
+        setMembers(response.data.members || []);
+      } catch (err) {
+        console.error("Error fetching class details:", err);
+        setError("Gagal memuat detail kelas.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchClassData();
+    fetchClassDetails();
   }, [class_id, navigate]);
+
+  if (loading) return <p>Memuat data kelas...</p>;
+
+  if (error) return <p className="text-danger">{error}</p>;
 
   return (
     <div>
       <NavBar />
       <div className="container mt-4">
-        {loading ? (
-          <p className="text-center">Loading...</p>
-        ) : error ? (
-          <div className="alert alert-danger text-center" role="alert">
-            {error}
-          </div>
-        ) : classDetails ? (
-          <div>
-            <div className="card shadow-sm mb-4">
-              <div className="card-body">
-                <h2 className="card-title fw-bold">{classDetails.class_name}</h2>
-                <p className="card-text text-muted">{classDetails.description}</p>
-              </div>
-            </div>
+        <h2>{classDetails.class_name}</h2>
+        <p>{classDetails.description}</p>
 
-            <ul className="nav nav-tabs mb-4">
-              <li className="nav-item">
-                <button
-                  className={`nav-link ${activeTab === "contents" ? "active" : ""}`}
-                  onClick={() => setActiveTab("contents")}
-                >
-                  Contents
-                </button>
-              </li>
-              <li className="nav-item">
-                <button
-                  className={`nav-link ${activeTab === "attendance" ? "active" : ""}`}
-                  onClick={() => setActiveTab("attendance")}
-                >
-                  Attendance
-                </button>
-              </li>
-            </ul>
+        <ul className="nav nav-tabs">
+          <li className="nav-item">
+            <button
+              className={`nav-link ${activeTab === "contents" ? "active" : ""}`}
+              onClick={() => setActiveTab("contents")}
+            >
+              Konten
+            </button>
+          </li>
+          <li className="nav-item">
+            <button
+              className={`nav-link ${activeTab === "attendance" ? "active" : ""}`}
+              onClick={() => setActiveTab("attendance")}
+            >
+              Kehadiran
+            </button>
+          </li>
+        </ul>
 
-            <div className="tab-content">
-              {activeTab === "contents" && (
-                <div className="tab-pane fade show active">
-                  <ContentPage role={role} classId={class_id} />
-                </div>
-              )}
-              {activeTab === "attendance" && (
-                <div className="tab-pane fade show active">
-                  <AttendancePage role={role} classId={class_id} />
-                </div>
-              )}
-            </div>
-          </div>
-        ) : (
-          <p className="text-center">No class found.</p>
-        )}
+        <div className="mt-4">
+          {activeTab === "contents" && <ContentPage classId={class_id} />}
+          {activeTab === "attendance" && <AttendancePage classId={class_id} />}
+        </div>
       </div>
     </div>
   );
