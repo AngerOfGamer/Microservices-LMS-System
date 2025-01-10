@@ -1,8 +1,23 @@
 const express = require('express');
 const connectDB = require('./config/database');
 const notificationRoutes = require("./routes/notification");
-const app = express();
+const session = require("express-session");
+const path = require('path');
 
+const cors = require("cors");
+const app = express();
+app.use(cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  }));
+  
+  app.use(express.json());
+  app.use(session({
+    secret: "your-secret-key",
+    resave: false,
+    saveUninitialized: true,
+  }));
+  
 app.use(express.json());
 connectDB();
 

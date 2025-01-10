@@ -1,82 +1,64 @@
-
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom"; 
+import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 const LoginPage = () => {
-  const navigate = useNavigate();
-
-  const [username, setUsername] = useState("");
-  const [nip_nim, setNipNim] = useState("");
-  const [error, setError] = useState("");
+  const [formData, setFormData] = useState({ username: "", nip_nim: "" });
+  const [message, setMessage] = useState("");
+  const navigate = useNavigate(); 
 
   const handleLogin = async () => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include", // Kirim session cookie ke backend
-        body: JSON.stringify({ username, nip_nim }),
-      });
-      console.log("Backend URL:", process.env.REACT_APP_BACKEND_URL);
+      const response = await axios.post("http://localhost:5005/auth/login", formData);
 
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log("Login berhasil:", data);
-
-        // Simpan data user ke localStorage
-        localStorage.setItem("user", JSON.stringify(data.user));
-
-        // Arahkan pengguna ke halaman yang sesuai
+      if (response.status === 200) {
+        const data = response.data;
+        console.log("User data stored in localStorage:", data.user);
+        localStorage.setItem("user", JSON.stringify(data.user)); 
+        setMessage("Login berhasil!");
         navigate("/dashboard");
-      } else {
-        const errorData = await response.json();
-        setError(errorData.error || errorData.message); // Tampilkan pesan error
       }
-    } catch (err) {
-      console.error("Error saat login:", err);
-      setError("Terjadi kesalahan. Silakan coba lagi.");
+    } catch (error) {
+      setMessage("Login gagal. Periksa kembali kredensial Anda.");
     }
   };
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
   return (
-    <div className="container d-flex justify-content-center align-items-center vh-100 bg-light">
-      <div className="card shadow-sm p-4" style={{ width: "100%", maxWidth: "400px" }}>
-        <h1 className="text-center mb-4">Login</h1>
-        {error && <div className="alert alert-danger">{error}</div>}
+    <div className="container d-flex justify-content-center align-items-center vh-100">
+      <div className="card p-4 shadow" style={{ maxWidth: "400px", width: "100%" }}>
+        <h2 className="text-center">Login</h2>
+        {message && <div className="alert alert-info">{message}</div>}
         <div className="mb-3">
-          <label htmlFor="username" className="form-label">
-            Username
-          </label>
+          <label htmlFor="username" className="form-label">Username</label>
           <input
+            type="text"
+            className="form-control"
             id="username"
-            type="text"
+            name="username"
+            value={formData.username}
+            onChange={handleChange}
             placeholder="Masukkan Username"
-            className="form-control"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
           />
         </div>
         <div className="mb-3">
-          <label htmlFor="nipNim" className="form-label">
-            NIP/NIM
-          </label>
+          <label htmlFor="nip_nim" className="form-label">NIP/NIM</label>
           <input
-            id="nipNim"
             type="text"
-            placeholder="Masukkan NIP/NIM"
             className="form-control"
-            value={nip_nim}
-            onChange={(e) => setNipNim(e.target.value)}
+            id="nip_nim"
+            name="nip_nim"
+            value={formData.nip_nim}
+            onChange={handleChange}
+            placeholder="Masukkan NIP/NIM"
           />
         </div>
-        <button
-          onClick={handleLogin}
-          className="btn btn-primary w-100"
-        >
+        <button className="btn btn-primary w-100" onClick={handleLogin}>
           Login
         </button>
       </div>
