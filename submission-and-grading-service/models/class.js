@@ -5,12 +5,12 @@ const ClassSchema = new mongoose.Schema({
   class_id: { type: Number, unique: true },
   class_name: { type: String, required: true, maxlength: 100 },
   description: { type: String, default: null },
-  created_at: { type: Date, default: Date.now }
+  created_at: { type: Date, default: Date.now },
 });
 
 ClassSchema.pre('save', async function (next) {
   if (!this.class_id) {
-    this.class_id = await getNextSequence('class'); 
+    this.class_id = await getNextSequence('class');
   }
   next();
 });

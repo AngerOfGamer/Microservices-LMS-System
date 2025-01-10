@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import NavBar from "../components/NavBar";
 
 const AttendancePage = ({ classId }) => {
   const [date, setDate] = useState("");
@@ -8,7 +9,6 @@ const AttendancePage = ({ classId }) => {
   const [attendanceRecap, setAttendanceRecap] = useState([]);
   const [role, setRole] = useState("");
 
-  // Fetch role pengguna dari localStorage
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem("user"));
     if (storedUser) {
@@ -16,7 +16,6 @@ const AttendancePage = ({ classId }) => {
     }
   }, []);
 
-  // Fetch data mahasiswa atau rekap absensi
   useEffect(() => {
     const fetchData = async () => {
       const storedUser = JSON.parse(localStorage.getItem("user"));
@@ -28,38 +27,20 @@ const AttendancePage = ({ classId }) => {
       }
 
       try {
-        if (role === "mahasiswa") {
-          // Fetch rekap absensi mahasiswa
-          const resRecap = await axios.get(
-            `${process.env.REACT_APP_BACKEND_URL}/api/attendance/records`,
-            {
-              params: { class_id: classId },
-              headers: { username, role },
-              withCredentials: true,
-            }
-          );
-          setAttendanceRecap(resRecap.data);
-        } else {
-          // Fetch daftar mahasiswa dan rekap absensi
-          const resStudents = await axios.get(
-            `${process.env.REACT_APP_BACKEND_URL}/api/attendance/students`,
-            {
-              params: { class_id: classId },
-              headers: { username, role },
-              withCredentials: true,
-            }
-          );
-          setStudents(resStudents.data);
+        const resRecap = await axios.get("http://localhost:5001/attendance/recap", {
+          params: { class_id: classId },
+          headers: { username, role },
+          withCredentials: true,
+        });
+        setAttendanceRecap(resRecap.data);
 
-          const resRecap = await axios.get(
-            `${process.env.REACT_APP_BACKEND_URL}/api/attendance/recap`,
-            {
-              params: { class_id: classId },
-              headers: { username, role },
-              withCredentials: true,
-            }
-          );
-          setAttendanceRecap(resRecap.data);
+        if (role !== "mahasiswa") {
+          const resStudents = await axios.get("http://localhost:5001/attendance/mahasiswa", {
+            params: { class_id: classId },
+            headers: { username, role },
+            withCredentials: true,
+          });
+          setStudents(resStudents.data);
         }
       } catch (err) {
         console.error("Error fetching data:", err.response?.data || err.message);
@@ -69,7 +50,6 @@ const AttendancePage = ({ classId }) => {
     fetchData();
   }, [classId]);
 
-  // Simpan data absensi
   const saveAttendance = async (e) => {
     e.preventDefault();
 
@@ -88,7 +68,7 @@ const AttendancePage = ({ classId }) => {
 
     try {
       await axios.post(
-        `${process.env.REACT_APP_BACKEND_URL}/api/attendance`,
+        "http://localhost:5001/attendance",
         { date, class_id: classId, attendance },
         {
           headers: { username, role },
@@ -97,16 +77,11 @@ const AttendancePage = ({ classId }) => {
       );
 
       alert("Absensi berhasil disimpan!");
-
-      // Muat ulang rekap absensi setelah menyimpan
-      const resRecap = await axios.get(
-        `${process.env.REACT_APP_BACKEND_URL}/api/attendance/recap`,
-        {
-          params: { class_id: classId },
-          headers: { username, role },
-          withCredentials: true,
-        }
-      );
+      const resRecap = await axios.get("http://localhost:5001/attendance/recap", {
+        params: { class_id: classId },
+        headers: { username, role },
+        withCredentials: true,
+      });
       setAttendanceRecap(resRecap.data);
     } catch (err) {
       console.error("Error saving attendance:", err.response?.data || err.message);
@@ -114,7 +89,6 @@ const AttendancePage = ({ classId }) => {
     }
   };
 
-  // Atur status kehadiran mahasiswa
   const toggleAttendance = (studentId) => {
     setAttendance((prev) => {
       const existing = prev.find((record) => record.studentId === studentId);
@@ -126,10 +100,11 @@ const AttendancePage = ({ classId }) => {
   };
 
   return (
+    <div>
+      <NavBar/>
     <div className="container mt-4">
       <h2 className="mb-4">Attendance Management</h2>
 
-      {/* Form Absensi untuk Admin/Dosen */}
       {role !== "mahasiswa" && (
         <div className="card shadow-sm mb-4">
           <div className="card-body">
@@ -154,7 +129,7 @@ const AttendancePage = ({ classId }) => {
                       key={student.user_id}
                       className="list-group-item d-flex justify-content-between align-items-center"
                     >
-                      {student.name}
+                      {student.name || "Nama tidak tersedia"}
                       <input
                         type="checkbox"
                         onChange={() => toggleAttendance(student.user_id)}
@@ -174,7 +149,6 @@ const AttendancePage = ({ classId }) => {
         </div>
       )}
 
-      {/* Rekap Absensi */}
       <h3 className="mb-4">Attendance Recap</h3>
       <div className="card shadow-sm">
         <div className="card-body">
@@ -190,7 +164,7 @@ const AttendancePage = ({ classId }) => {
               {attendanceRecap.map((record, index) => (
                 <tr key={index}>
                   <td>{new Date(record.date).toLocaleDateString("en-GB")}</td>
-                  {role !== "mahasiswa" && <td>{record.student_name}</td>}
+                  {role !== "mahasiswa" && <td>{record.mahasiswa_name || "Nama tidak tersedia"}</td>}
                   <td>{record.status}</td>
                 </tr>
               ))}
@@ -198,6 +172,7 @@ const AttendancePage = ({ classId }) => {
           </table>
         </div>
       </div>
+    </div>
     </div>
   );
 };

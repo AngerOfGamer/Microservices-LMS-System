@@ -1,6 +1,6 @@
 const express = require("express");
 const multer = require("multer");
-const path = require("path");
+const mongoose = require("mongoose");
 const Submission = require("../models/submission");
 const Grade = require("../models/grade");
 const User = require("../models/user");
@@ -19,7 +19,7 @@ const authenticate = (req, res, next) => {
 
 router.use(authenticate);
 
-// Konfigurasi multer untuk upload file
+// Konfigurasi multer untuk file upload
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "uploads/");
@@ -32,7 +32,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// POST: Mahasiswa mengumpulkan tugas
+// POST: Mahasiswa mengunggah tugas
 router.post("/", upload.single("file"), async (req, res) => {
   const { username } = req.user;
   const { task_title, class_id } = req.body;
@@ -50,7 +50,7 @@ router.post("/", upload.single("file"), async (req, res) => {
 
     const submission = new Submission({
       task_title,
-      class_id,
+      class_id: new mongoose.Types.ObjectId(class_id),
       user_id: user._id,
       submission_url: file_url,
     });
@@ -76,12 +76,14 @@ router.get("/", async (req, res) => {
       .populate("user_id", "username")
       .lean();
 
-    const grades = await Grade.find({ submission_id: { $in: submissions.map(s => s._id) } }).lean();
+    const grades = await Grade.find({
+      submission_id: { $in: submissions.map((s) => s._id) },
+    }).lean();
 
-    const results = submissions.map(sub => {
-      const grade = grades.find(g => g.submission_id.equals(sub._id));
+    const results = submissions.map((submission) => {
+      const grade = grades.find((g) => g.submission_id.equals(submission._id));
       return {
-        ...sub,
+        ...submission,
         grade: grade ? grade.grade : null,
       };
     });
@@ -107,8 +109,10 @@ router.post("/grade", async (req, res) => {
   }
 
   try {
+    const submissionObjectId = new mongoose.Types.ObjectId(submission_id); // Pastikan submission_id valid
+
     const gradeRecord = await Grade.findOneAndUpdate(
-      { submission_id },
+      { submission_id: submissionObjectId },
       { grade },
       { upsert: true, new: true }
     );

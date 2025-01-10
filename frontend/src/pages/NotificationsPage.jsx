@@ -1,31 +1,37 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import "bootstrap/dist/css/bootstrap.min.css";
 
-const Notification = () => {
+const NotificationsPage = () => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [category, setCategory] = useState("");
   const [classId, setClassId] = useState("");
   const [classes, setClasses] = useState([]);
-  const [role, setRole] = useState(""); // Role pengguna
-  const [notifications, setNotifications] = useState([]); // Notifikasi untuk mahasiswa
-  const [error, setError] = useState(""); // Error saat mengambil data
-  const [loading, setLoading] = useState(true); // Status loading
+  const [role, setRole] = useState("");
+  const [notifications, setNotifications] = useState([]);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const storedUser = JSON.parse(localStorage.getItem("user"));
+        if (!storedUser || !storedUser.username || !storedUser.role) {
+          setError("User tidak valid. Silakan login kembali.");
+          return;
+        }
+
         setRole(storedUser.role);
 
         if (storedUser.role === "dosen") {
-          const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/classes`, {
-            withCredentials: true,
+          const response = await axios.get(`http://localhost:5003/notification/classes`, {
+            headers: { username: storedUser.username, role: storedUser.role },
           });
           setClasses(response.data.classes);
         } else if (storedUser.role === "mahasiswa") {
-          const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/notifications`, {
-            withCredentials: true,
+          const response = await axios.get(`http://localhost:5003/notification`, {
+            headers: { username: storedUser.username, role: storedUser.role },
           });
           setNotifications(response.data.notifications);
         }
@@ -48,12 +54,19 @@ const Notification = () => {
       return;
     }
 
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+
+    const payload = {
+      title,
+      content,
+      category,
+      class_id: classId || null,
+    };
+
     try {
-      const response = await axios.post(
-        `${process.env.REACT_APP_BACKEND_URL}/api/notifications`,
-        payload,
-        { withCredentials: true }
-      );
+      await axios.post(`http://localhost:5003/notification`, payload, {
+        headers: { username: storedUser.username, role: storedUser.role },
+      });
       alert("Notifikasi berhasil dibuat!");
       setTitle("");
       setContent("");
@@ -61,7 +74,7 @@ const Notification = () => {
       setClassId("");
     } catch (err) {
       console.error("Gagal membuat notifikasi:", err.response?.data || err.message);
-      alert("Gagal membuat notifikasi. " + (err.response?.data?.message || ""));
+      alert("Gagal membuat notifikasi.");
     }
   };
 
@@ -82,7 +95,7 @@ const Notification = () => {
         {notifications.length > 0 ? (
           <ul className="list-group">
             {notifications.map((notif) => (
-              <li key={notif.notification_id} className="list-group-item">
+              <li key={notif._id} className="list-group-item">
                 <h5>{notif.title}</h5>
                 <p>{notif.content}</p>
                 <small className="text-muted">
@@ -94,15 +107,6 @@ const Notification = () => {
         ) : (
           <p>Tidak ada notifikasi untuk Anda saat ini.</p>
         )}
-      </div>
-    );
-  }
-
-  if (role === "dosen" && classes.length === 0) {
-    return (
-      <div className="container mt-4">
-        <h2 className="mb-4">Tidak Ada Kelas</h2>
-        <p>Anda belum terdaftar sebagai pengajar di kelas mana pun.</p>
       </div>
     );
   }
@@ -141,7 +145,7 @@ const Notification = () => {
             >
               <option value="">Pilih Kelas</option>
               {classes.map((cls) => (
-                <option key={cls.class_id} value={cls.class_id}>
+                <option key={cls._id} value={cls._id}>
                   {cls.class_name}
                 </option>
               ))}
@@ -174,4 +178,4 @@ const Notification = () => {
   );
 };
 
-export default Notification;
+export default NotificationsPage;
