@@ -1,6 +1,7 @@
 const express = require("express");
 const Attendance = require("../models/attendance");
 const User = require("../models/user");
+const ClassMember = require("../models/classMember")
 const router = express.Router();
 const getNextSequence = require("../utils/increment");
 
@@ -15,6 +16,27 @@ const authenticate = (req, res, next) => {
 };
 
 router.use(authenticate);
+
+//GET MAHASISWA
+router.get("/mahasiswa", async (req, res) => {
+  const { class_id } = req.query;
+
+  if (!class_id) {
+      return res.status(400).json({ error: "Missing class_id in query" });
+  }
+
+  try {
+      const mahasiswa = await ClassMember.find({ class_id }).populate("user_id", "name username");
+      res.json(mahasiswa.map((m) => ({
+          user_id: m.user_id._id,
+          name: m.user_id.name,
+          username: m.user_id.username,
+      })));
+  } catch (err) {
+      console.error("Error fetching mahasiswa:", err.message);
+      res.status(500).json({ error: "Database error" });
+  }
+});
 
 // POST: Simpan data absensi
 router.post("/", async (req, res) => {

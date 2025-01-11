@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import NavBar from "../components/NavBar";
 
 const AttendancePage = ({ classId }) => {
   const [date, setDate] = useState("");
-  const [students, setStudents] = useState([]);
-  const [attendance, setAttendance] = useState([]);
-  const [attendanceRecap, setAttendanceRecap] = useState([]);
-  const [role, setRole] = useState("");
+  const [students, setStudents] = useState([]); 
+  const [attendance, setAttendance] = useState([]); 
+  const [attendanceRecap, setAttendanceRecap] = useState([]); 
+  const [role, setRole] = useState(""); 
 
+  // Fetch role pengguna dari localStorage
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem("user"));
     if (storedUser) {
@@ -16,6 +16,7 @@ const AttendancePage = ({ classId }) => {
     }
   }, []);
 
+  // Fetch data mahasiswa dan rekap absensi
   useEffect(() => {
     const fetchData = async () => {
       const storedUser = JSON.parse(localStorage.getItem("user"));
@@ -27,6 +28,7 @@ const AttendancePage = ({ classId }) => {
       }
 
       try {
+        // Ambil rekap absensi
         const resRecap = await axios.get("http://localhost:5001/attendance/recap", {
           params: { class_id: classId },
           headers: { username, role },
@@ -34,6 +36,7 @@ const AttendancePage = ({ classId }) => {
         });
         setAttendanceRecap(resRecap.data);
 
+        // Ambil daftar mahasiswa jika bukan role "mahasiswa"
         if (role !== "mahasiswa") {
           const resStudents = await axios.get("http://localhost:5001/attendance/mahasiswa", {
             params: { class_id: classId },
@@ -50,6 +53,7 @@ const AttendancePage = ({ classId }) => {
     fetchData();
   }, [classId]);
 
+  // Fungsi untuk menyimpan absensi
   const saveAttendance = async (e) => {
     e.preventDefault();
 
@@ -89,6 +93,7 @@ const AttendancePage = ({ classId }) => {
     }
   };
 
+  // Fungsi untuk mengatur status absensi mahasiswa
   const toggleAttendance = (studentId) => {
     setAttendance((prev) => {
       const existing = prev.find((record) => record.studentId === studentId);
@@ -100,11 +105,10 @@ const AttendancePage = ({ classId }) => {
   };
 
   return (
-    <div>
-      <NavBar/>
     <div className="container mt-4">
       <h2 className="mb-4">Attendance Management</h2>
 
+      {/* Form Absensi untuk Admin/Dosen */}
       {role !== "mahasiswa" && (
         <div className="card shadow-sm mb-4">
           <div className="card-body">
@@ -129,7 +133,7 @@ const AttendancePage = ({ classId }) => {
                       key={student.user_id}
                       className="list-group-item d-flex justify-content-between align-items-center"
                     >
-                      {student.name || "Nama tidak tersedia"}
+                      {student.name || student.username || "Nama tidak tersedia"}
                       <input
                         type="checkbox"
                         onChange={() => toggleAttendance(student.user_id)}
@@ -149,6 +153,7 @@ const AttendancePage = ({ classId }) => {
         </div>
       )}
 
+      {/* Rekap Absensi */}
       <h3 className="mb-4">Attendance Recap</h3>
       <div className="card shadow-sm">
         <div className="card-body">
@@ -164,7 +169,9 @@ const AttendancePage = ({ classId }) => {
               {attendanceRecap.map((record, index) => (
                 <tr key={index}>
                   <td>{new Date(record.date).toLocaleDateString("en-GB")}</td>
-                  {role !== "mahasiswa" && <td>{record.mahasiswa_name || "Nama tidak tersedia"}</td>}
+                  {role !== "mahasiswa" && (
+                    <td>{record.mahasiswa_name || "Nama tidak tersedia"}</td>
+                  )}
                   <td>{record.status}</td>
                 </tr>
               ))}
@@ -172,7 +179,6 @@ const AttendancePage = ({ classId }) => {
           </table>
         </div>
       </div>
-    </div>
     </div>
   );
 };
